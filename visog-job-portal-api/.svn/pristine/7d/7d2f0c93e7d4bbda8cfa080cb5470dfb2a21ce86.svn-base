@@ -1,0 +1,22 @@
+package com.vsoftcorp.usermgmt.service;
+
+import java.util.List;
+
+import com.vsoftcorp.usermgmt.req.LoginReportReq;
+import com.vsoftcorp.usermgmt.res.AuditLoginResponse;
+import com.vsoftcorp.usermgmt.res.SuccessReportResponse;
+import com.vsoftcorp.usermgmt.res.reports.FailureReportResponse;
+
+public interface ReportService {
+
+	public List<AuditLoginResponse> getAuditLoginReport();
+
+	public List<SuccessReportResponse> getSuccessLoginAttemptsReport(LoginReportReq loginReportReq);
+	
+	public  List<FailureReportResponse> getFailureLoginAttemptsReport(Long userId, LoginReportReq loginReportReq);
+
+	public  List<FailureReportResponse> getFailureLoginAttemptsReportForAll(LoginReportReq loginReportReq);
+
+	
+	
+}

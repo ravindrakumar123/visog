@@ -1,0 +1,18 @@
+package com.vsoftcorp.usermgmt.req;
+
+import java.util.List;
+
+
+public class OTPPreferencesReqs {
+
+	private List<OTPPreferencesReq> preferences;
+
+	public List<OTPPreferencesReq> getPreferences() {
+		return preferences;
+	}
+
+	public void setPreferences(List<OTPPreferencesReq> preferences) {
+		this.preferences = preferences;
+	}
+
+}

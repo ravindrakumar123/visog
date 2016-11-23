@@ -1,0 +1,105 @@
+package com.vsoftcorp.usermgmt.model;
+
+import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+
+@Entity
+@Table(name = "USER_OTPS")
+public class UserOTP {
+
+	@Id
+	@Column(name = "USER_OTP_ID")
+	@SequenceGenerator(name = "USER_OTPS_SEQ", sequenceName = "USER_OTPS_SEQ", allocationSize = 1)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "USER_OTPS_SEQ")
+	private Long userOtpId;
+	
+	@ManyToOne
+	@JoinColumn(name = "USER_ID")
+	private User userId;
+	
+	@ManyToOne
+	@JoinColumn(name = "INST_ID")
+	private InstitutionMaster instId;
+
+	@Column(name = "VALUE")
+	private String value;
+
+	@Column(name = "ACTIVITY")
+	private String activity;
+
+	@Column(name = "STATUS")
+	private String status;
+	
+	@Temporal(TemporalType.DATE)
+	@Column(name = "GENERATED_ON")
+	private Date generatedOn;
+	
+
+	public User getUserId() {
+		return userId;
+	}
+
+	public void setUserId(User userId) {
+		this.userId = userId;
+	}
+
+	public String getValue() {
+		return value;
+	}
+
+	public void setValue(String value) {
+		this.value = value;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+	public Long getUserOtpId() {
+		return userOtpId;
+	}
+
+	public void setUserOtpId(Long userOtpId) {
+		this.userOtpId = userOtpId;
+	}
+
+	public InstitutionMaster getInstId() {
+		return instId;
+	}
+
+	public void setInstId(InstitutionMaster instId) {
+		this.instId = instId;
+	}
+
+	public String getActivity() {
+		return activity;
+	}
+
+	public void setActivity(String activity) {
+		this.activity = activity;
+	}
+
+	public Date getGeneratedOn() {
+		return generatedOn;
+	}
+
+	public void setGeneratedOn(Date generatedOn) {
+		this.generatedOn = generatedOn;
+	}
+
+}

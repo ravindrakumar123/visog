@@ -1,0 +1,182 @@
+package com.vsoftcorp.usermgmt.serviceimpl;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+import org.apache.log4j.Logger;
+
+import com.vsoftcorp.usermgmt.dao.SuperAdminDao;
+import com.vsoftcorp.usermgmt.exceptions.UserMgmtException;
+import com.vsoftcorp.usermgmt.model.InstituteParams;
+import com.vsoftcorp.usermgmt.model.InstitutionMaster;
+import com.vsoftcorp.usermgmt.req.InstParamsReq;
+import com.vsoftcorp.usermgmt.req.InstituteReq;
+import com.vsoftcorp.usermgmt.res.InstParamRes;
+import com.vsoftcorp.usermgmt.res.InstituteRes;
+import com.vsoftcorp.usermgmt.service.SuperAdminService;
+
+@Singleton
+public class SuperAdminServiceImpl implements SuperAdminService {
+
+	private static final Logger logger = Logger
+			.getLogger(SuperAdminServiceImpl.class);
+
+	@Inject
+	private SuperAdminDao dao;
+
+	/**
+	 *  This method save institution by using instituteReq
+	 */
+	public Long saveInstitute(InstituteReq instituteReq) {
+		
+		if (dao.isInstitutionExists(instituteReq.getRtNum())) {
+			throw new UserMgmtException("This RTNum already exists");
+		}
+		InstitutionMaster institutionMaster = new InstitutionMaster();
+		institutionMaster.setAddr1(instituteReq.getAddr1());
+		institutionMaster.setAddr2(instituteReq.getAddr2());
+		institutionMaster.setCity(instituteReq.getCity());
+		institutionMaster.setName(instituteReq.getName());
+		institutionMaster.setRtNum(instituteReq.getRtNum());
+		institutionMaster.setState(instituteReq.getState());
+		institutionMaster.setZip(instituteReq.getZip());
+
+		return dao.saveInstitute(institutionMaster);
+
+	}
+	
+	/**
+	 * This method updates institution by using instituteReq and institution id
+	 */
+
+	public void updateInstitute(InstituteReq instituteReq, Long instId) {
+		InstitutionMaster institutionMaster = dao.getInstitute(instId);
+		
+		institutionMaster.setAddr1(instituteReq.getAddr1());
+		institutionMaster.setAddr2(instituteReq.getAddr2());
+		institutionMaster.setCity(instituteReq.getCity());
+		institutionMaster.setName(instituteReq.getName());
+		institutionMaster.setRtNum(instituteReq.getRtNum());
+		institutionMaster.setState(instituteReq.getState());
+		institutionMaster.setZip(instituteReq.getZip());
+
+		dao.updateInstitute(institutionMaster);
+
+	}
+
+	/**
+	 * This method deletes institution by using institution id
+	 */
+	public Boolean deleteInstitute(Long instId) {
+		
+		InstitutionMaster instMaster = new InstitutionMaster();
+		instMaster.setInstId(instId);
+		
+		if (dao.isUserExists(instMaster)) {
+			throw new UserMgmtException("Users exists for this Institution so first delete the Users for this institution");
+		} 
+		return dao.deleteInstitute(instId);	
+
+	}
+
+	/**
+	 * This method returns institution by using institution id
+	 */
+	public InstituteRes getInstitute(Long instId) {
+
+		InstitutionMaster institutionMaster = dao.getInstitute(instId);
+
+		InstituteRes instituteRes = new InstituteRes();
+		instituteRes.setAddr1(institutionMaster.getAddr1());
+		instituteRes.setAddr2(institutionMaster.getAddr2());
+		instituteRes.setCity(institutionMaster.getCity());
+		instituteRes.setId(institutionMaster.getInstId());
+		instituteRes.setName(institutionMaster.getName());
+		instituteRes.setRtNum(institutionMaster.getRtNum());
+		instituteRes.setState(institutionMaster.getState());
+		instituteRes.setZip(institutionMaster.getZip());
+
+		return instituteRes;
+
+	}
+
+	/**
+	 * This method returns all the institutions
+	 */
+	public List<InstituteRes> getInstitutes() {
+
+		List<InstitutionMaster> institutionMasters = dao.getInstitutes();
+
+		List<InstituteRes> instituteResList = new ArrayList<>();
+
+		InstituteRes instituteRes = null;
+
+		for (InstitutionMaster institutionMaster : institutionMasters) {
+			instituteRes = new InstituteRes();
+			instituteRes.setAddr1(institutionMaster.getAddr1());
+			instituteRes.setAddr2(institutionMaster.getAddr2());
+			instituteRes.setCity(institutionMaster.getCity());
+			instituteRes.setId(institutionMaster.getInstId());
+			instituteRes.setName(institutionMaster.getName());
+			instituteRes.setRtNum(institutionMaster.getRtNum());
+			instituteRes.setState(institutionMaster.getState());
+			instituteRes.setZip(institutionMaster.getZip());
+
+			instituteResList.add(instituteRes);
+		}
+
+		return instituteResList;
+
+	}
+
+	/**
+	 * This method saves/updates the institute params
+	 */
+	public void saveOrUpdateInstituteParams(Long institutionId, List<InstParamsReq> instParamsReqs) {
+		
+		InstitutionMaster institutionMaster = new InstitutionMaster();
+		institutionMaster.setInstId(institutionId);
+
+		List<InstituteParams> instituteParamsList = new ArrayList<>();
+		InstituteParams instituteParams 	= null;
+
+		for(InstParamsReq instParamsReq : instParamsReqs) {
+			instituteParams = new InstituteParams();
+			instituteParams.setInstId(institutionMaster);
+			instituteParams.setParamName(instParamsReq.getParamName());
+			instituteParams.setParamValue(instParamsReq.getParamvalue());
+			instituteParamsList.add(instituteParams);
+		}
+		
+		dao.saveOrUpdateInstituteParams(institutionMaster, instituteParamsList);
+
+	}
+
+	/**
+	 * This method returns inst params list
+	 */
+	public List<InstParamRes> getInstituteParams(Long instId) {
+		InstitutionMaster institutionMaster = new InstitutionMaster();
+		institutionMaster.setInstId(instId);
+
+		List<InstituteParams> instituteParamsList = dao.getInstituteParams(institutionMaster);
+		
+		List<InstParamRes> instParamResList = new ArrayList<>();
+		
+		InstParamRes instParamRes = null;
+		
+		for(InstituteParams instituteParams : instituteParamsList) {
+			instParamRes = new InstParamRes();
+			instParamRes.setParamName(instituteParams.getParamName());
+			instParamRes.setParamvalue(instituteParams.getParamValue());
+			instParamResList.add(instParamRes);
+		}
+
+		return instParamResList;
+	}
+	
+
+}

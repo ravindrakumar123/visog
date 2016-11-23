@@ -1,0 +1,127 @@
+package com.vsoftcorp.usermgmt.rest.client;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Random;
+
+import org.apache.log4j.Logger;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import com.vsoftcorp.usermgmt.utils.PropertyUtil;
+
+public class UserMgmtRestClient {
+
+	private static final Logger logger = Logger.getLogger(UserMgmtRestClient.class);
+
+	private static Random random;
+
+	static {
+		random = new Random();
+	}
+
+	public static synchronized Long getRandomNumber() {
+		return random.nextLong();
+	}
+
+	public static String sendPutRequest(String urlStr, String contentType, String jsonStr) {
+		return sendRequest(urlStr, contentType, jsonStr, "PUT");
+	}
+		
+	public static String sendPostRequest(String urlStr, String contentType, String jsonStr) {
+		return sendRequest(urlStr, contentType, jsonStr, "POST");
+	}
+		
+	public static String sendRequest(String urlStr, String contentType, String jsonStr, String methodType) {
+			
+		logger.info("rest url : " + urlStr);
+		logger.info("rest body : " + jsonStr);
+		logger.info("method type : " + methodType);
+		
+		try {
+
+			URL url = new URL(urlStr);
+			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+			conn.setDoOutput(true);
+			conn.setRequestMethod(methodType);
+			conn.setRequestProperty("Content-Type", contentType);
+
+			String input = jsonStr;//"{\"qty\":100,\"name\":\"iPad 4\"}";
+
+			OutputStream os = conn.getOutputStream();
+			os.write(input.getBytes());
+			os.flush();
+
+			BufferedReader br = new BufferedReader(new InputStreamReader(
+					(conn.getInputStream())));
+
+			String output;
+			System.out.println("Output from Server .... \n");
+			while ((output = br.readLine()) != null) {
+				logger.info("rest response " + output);
+			}
+
+			conn.disconnect();
+			
+			return output;
+
+		} catch (Exception e) {
+//			e.printStackTrace();
+			
+			logger.error("Error in rest client", e);
+			
+			return null;
+
+		}
+
+	}
+	
+	public static String sendAlert(JSONObject jsonObject) {
+		
+		return sendPostRequest(PropertyUtil.getProperty("ALERTS_URL"), "application/json", 
+				jsonObject.toString());
+/*		return sendPostRequest("http://192.168.0.68:8090/vsoft-alerts/services/rest/handleRequest", "application/json", 
+				jsonObject.toString());*/
+	}
+	
+	public static JSONObject getVFXObject(String requestName, JSONObject instanceObj) {
+
+		instanceObj.put("subject", PropertyUtil.getProperty("ALERTS_EMAIL_SUBJECT"));
+		
+		JSONObject vfxObject = new JSONObject();
+		Long vfxRequestId = getRandomNumber();
+		vfxObject.put("vfxRequestId", vfxRequestId);
+		
+		JSONObject reqObj = new JSONObject();
+		reqObj.put("REQUEST_NAME", requestName);
+		instanceObj.put("vfxRequestId", vfxRequestId);
+		instanceObj.put("requestId", getRandomNumber());
+		reqObj.put("INSTANCE", instanceObj);
+		
+		JSONArray reqArr = new JSONArray();
+		reqArr.put(reqObj);
+		
+		vfxObject.put("requests", reqArr);
+		
+		return vfxObject;
+	}
+	
+	public static void main(String[] args) {
+		JSONObject instanceObj = new JSONObject();
+		instanceObj.put("bankId", "1");
+		instanceObj.put("userId", "0");
+		instanceObj.put("alertType", "OTHER");
+		instanceObj.put("emailAddress", "sguggilla@vsoftcorp.com");
+		instanceObj.put("phoneNo", "9988998899");
+		instanceObj.put("subject", "Dummy SUbject");
+		instanceObj.put("message", "Mail Msg");
+		instanceObj.put("smsMessage", "SMS Msg");
+		instanceObj.put("emailInd", "true");
+		instanceObj.put("smsInd", "false");
+		sendAlert(getVFXObject("AlertRq", instanceObj));
+	}
+
+}

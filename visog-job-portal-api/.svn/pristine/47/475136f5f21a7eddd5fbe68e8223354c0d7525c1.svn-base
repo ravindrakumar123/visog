@@ -1,0 +1,100 @@
+package com.vsoftcorp.usermgmt.utils;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.SignatureException;
+
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.log4j.Logger;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import com.auth0.jwt.JWTSigner;
+import com.auth0.jwt.JWTVerifier;
+import com.auth0.jwt.JWTVerifyException;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.vsoftcorp.usermgmt.serviceimpl.SecurityServiceImpl;
+
+public class SecurityUtils {
+
+	private static final Logger logger = Logger.getLogger(SecurityServiceImpl.class);
+
+	public static String encode(String key, String data) {
+		return Jwts.builder()
+				  .setSubject(data)
+				  .signWith(SignatureAlgorithm.HS256, key)
+				  .compact();
+		
+	}
+
+	public static String decode(String key, String data) {
+		try {
+
+		   Jws<Claims> jws = Jwts.parser().setSigningKey(key).parseClaimsJws(data);
+
+			return jws.getBody().getSubject();
+
+		} catch (SignatureException e) {
+
+			logger.error("Error in decode JWT", e);
+		    return null;
+		}
+		
+	}
+
+	public static JSONObject decodeToJSON(String key, String data) {
+//		String jwtKey = "3Gi2fO8IYDSzm8_XApeblINMygU";
+//		String jwtPayload = "eyJhbGciOiJIUzI1NiJ9.eyJhY3Rpdml0eSI6ImxvZ2luIn0.cVq2Oxk0VZocLkDjJFjicrWgzo-1gOPoee-nbe1OOpo";
+		
+		try {
+		    final JWTVerifier verifier = new JWTVerifier(key);
+		    final Map<String,Object> claims = verifier.verify(data);
+		    
+		    return new JSONObject(claims);
+		    
+		} catch (JWTVerifyException | InvalidKeyException | NoSuchAlgorithmException | 
+				IllegalStateException | java.security.SignatureException | IOException e) {
+			logger.error("decodeToJSON Error key : " + key + ";; data : " + data, e);
+			return null;
+		}
+	}
+
+	public static void main(String[] args) {
+		String key = "3Gi2fO8IYDSzm8_XApeblINMygU";
+		JSONObject jsonObject = new JSONObject();
+		jsonObject.put("roleId", 2);
+		JSONArray accessLinks = new JSONArray();
+		accessLinks.put("myServices");
+		accessLinks.put("changePassword");
+		jsonObject.put("accessLinks", accessLinks);
+		
+		JSONArray roleArr = new JSONArray();
+		roleArr.put(jsonObject);
+		
+		String cipherText = encodeJSON(key, jsonObject);
+		System.out.println("cipherText :"+cipherText);
+		JSONObject decodedText = decodeToJSON(key, cipherText);
+		System.out.println("decodedText : "+decodedText);
+
+//		System.out.println(decodeToJSON("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI3OSJ9.ExjIrHS7k_03roKK-1PK0eh97v9Bcj_AYp0XT9btGEA", "eyJhbGciOiJIUzI1NiJ9.eyJhY3Rpdml0eSI6ImxvZ2luIn0.u91n5HozCcIvRMdKNGA11oHkANXuZ5B6mg8NDIpRsM8"));
+		
+//		System.out.println(decodeToJSON("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxNjEifQ.KsJunbSrHsvcx7-ibZT3DyUkB-awG9RavDF7BFDDNPg", "eyJhbGciOiJIUzI1NiJ9.W3sicm9sZUlkIjoyLCJhY2Nlc3NMaW5rcyI6WyJteVNlcnZpY2VzIiwiY2hhbmdlUGFzc3dvcmQiXX1d.cAOiG26Cr6IOf2WNcR7Ltf5zJf1ytcuvTShu9eYXSOA"));
+		
+	}
+	
+	private static String encodeJSON(String key, JSONObject jsonObject) {
+		final JWTSigner signer = new JWTSigner(key);
+		
+		Map<String, Object> map = new Gson().fromJson(jsonObject.toString(), new TypeToken<HashMap<String, Object>>() {}.getType());
+
+		return signer.sign(map);	
+	}
+}

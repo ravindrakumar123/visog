@@ -1,0 +1,108 @@
+package com.vsoftcorp.usermgmt.model;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+
+@Entity
+@Table(name = "INST_MASTER")
+public class InstitutionMaster {
+
+	@Id
+	@Column(name = "INST_ID")
+	@SequenceGenerator(name = "INST_MASTER_SEQ", sequenceName = "INST_MASTER_SEQ", allocationSize = 1)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "INST_MASTER_SEQ")
+	private Long instId;
+
+	@Column(name = "NAME")
+	private String name;
+
+	@Column(name = "ADDR1")
+	private String addr1;
+	
+	@Column(name = "ADDR2")
+	private String addr2;
+	
+	@Column(name = "CITY")
+	private String city;
+	
+	@Column(name = "STATE")
+	private String state;
+	
+	@Column(name = "RT_NUM")
+	private String rtNum;
+	
+	@Column(name = "ZIP")
+	private String zip;
+
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getAddr1() {
+		return addr1;
+	}
+
+	public void setAddr1(String addr1) {
+		this.addr1 = addr1;
+	}
+
+	public String getAddr2() {
+		return addr2;
+	}
+
+	public void setAddr2(String addr2) {
+		this.addr2 = addr2;
+	}
+
+	public String getCity() {
+		return city;
+	}
+
+	public void setCity(String city) {
+		this.city = city;
+	}
+
+	public String getState() {
+		return state;
+	}
+
+	public void setState(String state) {
+		this.state = state;
+	}
+
+	public String getRtNum() {
+		return rtNum;
+	}
+
+	public void setRtNum(String rtNum) {
+		this.rtNum = rtNum;
+	}
+
+	public String getZip() {
+		return zip;
+	}
+
+	public void setZip(String zip) {
+		this.zip = zip;
+	}
+
+	public Long getInstId() {
+		return instId;
+	}
+
+	public void setInstId(Long instId) {
+		this.instId = instId;
+	}
+	
+	
+}

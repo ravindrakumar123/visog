@@ -1,0 +1,50 @@
+package com.vsoftcorp.usermgmt.service;
+
+import java.util.List;
+
+import com.vsoftcorp.usermgmt.req.OTPPreferencesReq;
+import com.vsoftcorp.usermgmt.req.PasswordRulesReq;
+import com.vsoftcorp.usermgmt.req.UserOTPPreferencesReqs;
+import com.vsoftcorp.usermgmt.req.UserReq;
+import com.vsoftcorp.usermgmt.req.UserSearchReq;
+import com.vsoftcorp.usermgmt.req.UserStatusReq;
+import com.vsoftcorp.usermgmt.req.UsersStatusReq;
+import com.vsoftcorp.usermgmt.res.AccessLinksResponse;
+import com.vsoftcorp.usermgmt.res.AdminSingleUserResponse;
+import com.vsoftcorp.usermgmt.res.AdminUserResponse;
+import com.vsoftcorp.usermgmt.res.PasswordRulesRes;
+
+
+public interface AdminService {
+	
+	public Long saveUser(UserReq userReq);
+	
+	public void updateUser(UserReq userReq, Long userId);
+	
+	public Boolean deleteUser(Long userId);
+	
+	public Boolean deleteUsers(List<Long> userIds);
+	
+	public AdminSingleUserResponse getUser(Long userId);
+	
+	public List<AdminUserResponse> getUsers(Long institutionId, UserSearchReq userSearchReq);
+	
+	public Boolean saveOrUpdatePasswordRules(Long institutionId, Long roleId, PasswordRulesReq rulesReq);
+
+	public PasswordRulesRes getPasswordRules(Long institutionId, Long roleId);
+
+	public void updateUserStatus(Long institutionId, Long userId, UserStatusReq statusReq);
+	
+	public void updateUserStatus(Long institutionId, UsersStatusReq usersStatusReq);
+	
+	public void resetPassword(Long userId);
+	
+	public void resetPasswords(List<Long> userIds);
+	
+	public void saveOtpPreferences(Long instId, Long userId, List<OTPPreferencesReq> otpPreferencesReqs);
+	
+	public void saveOtpPreferences(Long instId, UserOTPPreferencesReqs otpPreferencesReqs);
+	
+	public List<AccessLinksResponse> getOtpPreferences(Long instId, Long userId);
+	
+}

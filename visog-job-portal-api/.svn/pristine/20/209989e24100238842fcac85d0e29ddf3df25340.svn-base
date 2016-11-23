@@ -1,0 +1,264 @@
+package com.vsoftcorp.usermgmt.servlet;
+
+import java.io.IOException;
+import java.util.Date;
+
+import javax.inject.Inject;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ContainerRequestFilter;
+import javax.ws.rs.container.ContainerResponseContext;
+import javax.ws.rs.container.ContainerResponseFilter;
+import javax.ws.rs.core.Cookie;
+import javax.ws.rs.core.NewCookie;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.ext.Provider;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.log4j.Logger;
+import org.json.JSONObject;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vsoftcorp.usermgmt.constants.AppConstants;
+import com.vsoftcorp.usermgmt.constants.Status;
+import com.vsoftcorp.usermgmt.dao.SuperAdminDao;
+import com.vsoftcorp.usermgmt.dao.UserDao;
+import com.vsoftcorp.usermgmt.exceptions.UserMgmtException;
+import com.vsoftcorp.usermgmt.model.InstituteParams;
+import com.vsoftcorp.usermgmt.model.InstitutionMaster;
+import com.vsoftcorp.usermgmt.model.LoginMaster;
+import com.vsoftcorp.usermgmt.res.VsoftResponse;
+import com.vsoftcorp.usermgmt.utils.PropertyUtil;
+import com.vsoftcorp.usermgmt.utils.SecurityUtils;
+
+/**
+ * This is the rest interceptor which executes around every API call
+ * @author sguggilla
+ *
+ */
+@Provider
+public class RestInterceptor implements ContainerRequestFilter, ContainerResponseFilter, ExceptionMapper<Throwable> {
+
+	private static final Logger logger = Logger.getLogger(RestInterceptor.class);
+
+
+	@Inject
+	private UserDao dao; 
+
+	@Inject
+	SuperAdminDao superAdminDao;
+
+	/**
+	 * This will execute before every call and it just logs the request details
+	 */
+	public void filter(ContainerRequestContext context) throws IOException {
+		
+		String url = context.getUriInfo().getPath();
+
+		String json = IOUtils.toString(context.getEntityStream());
+		
+		logger.info("Request method >>> " + context.getMethod() + 
+				"; Requset URI >>> " + context.getUriInfo().getPath() + 
+				"; Request Body >>> " + json + "\n");
+		
+		/*
+		 * Except before login url's, check the session validity
+		 */
+		if("true".equals(PropertyUtil.getProperty("IS_SESSION_REQUIRED"))) {
+			if(	!StringUtils.endsWith(url, "/users/login") && 
+					!StringUtils.contains(url, "/users/forgotPassword/")) {
+					
+					
+					logger.info("context.getCookies()>>>>>>>>>>>"+context.getCookies());
+					Cookie cookie = context.getCookies().get(AppConstants.USER_IDENTIFIER);
+					
+					if(cookie == null) {
+						context.abortWith(Response.status(Response.Status.UNAUTHORIZED).
+								entity("No cookie exists").build());
+						logger.error("No cookie exists");
+						return;
+					}
+					
+					Long loginSesId = Long.parseLong(SecurityUtils.decode(PropertyUtil.getProperty("HS256_KEY"), 
+							cookie.getValue()));
+					
+					LoginMaster loginMaster = dao.getLoginMaster(loginSesId);
+					
+					if(loginMaster != null) {
+						
+						// If the user logged in
+						if(AppConstants.TRUE_CHAR.equals(loginMaster.getInOutInd())) {
+							
+							String urlStr = StringUtils.substring(url, 7);
+							
+							urlStr = StringUtils.substring(urlStr, 0, StringUtils.indexOf(urlStr, "/"));
+							
+							Long instId = loginMaster.getInstId().getInstId();
+							
+							logger.info("instId>>>>>"+instId);
+							
+							InstitutionMaster institutionMaster = new InstitutionMaster();
+							institutionMaster.setInstId(instId);
+							
+							InstituteParams sessionExpiryTimeParam = superAdminDao.getInstituteParams(
+									institutionMaster, AppConstants.SESSION_EXPIRY_TIME);
+							
+							Long sessionExpiryTime = Long.parseLong(sessionExpiryTimeParam.getParamValue());
+							
+							Date curDate		= new Date();
+							Long sessionTime 	= loginMaster.getSessionTime().getTime();// In milli seconds
+							Long curTime		= curDate.getTime();// In milli seconds
+							Long diff			= (curTime - sessionTime) / 1000L;// In seconds
+							
+							if(diff > sessionExpiryTime) {
+								loginMaster.setInOutDate(curDate);
+								loginMaster.setSessionTime(curDate);
+								loginMaster.setInOutInd(AppConstants.FALSE_CHAR);
+								
+								dao.updateLoginMaster(loginMaster);
+								
+								context.abortWith(Response.status(Response.Status.UNAUTHORIZED).
+										entity("Session Expired").build());
+								logger.error("Session Expired");
+								
+								return;
+							}
+						} else {
+							context.abortWith(Response.status(Response.Status.UNAUTHORIZED).
+									entity("Already logged out").build());
+							logger.error("Already logged out");
+							return;
+						}
+					} else {
+						context.abortWith(Response.status(Response.Status.UNAUTHORIZED).
+												entity("No session exists").build());
+						logger.error("No session exists");
+						return;
+					}
+					
+				}
+		}
+		context.setEntityStream(IOUtils.toInputStream(json));
+	}
+
+	/**
+	 * This will execute after the call response and it just logs the response details
+	 */
+	public void filter(ContainerRequestContext reqContext,
+			ContainerResponseContext resContext) throws IOException {
+		
+		String url = reqContext.getUriInfo().getPath();
+
+		String json = new ObjectMapper().writerWithDefaultPrettyPrinter()
+				.writeValueAsString(resContext.getEntity());
+
+		logger.info("Request method >>> " + reqContext.getMethod() + 
+				"; Requset URI >>> "+ url + 
+				"; Response object >>> \n" + json + "\n");
+		
+		if("true".equals(PropertyUtil.getProperty("IS_SESSION_REQUIRED"))) {
+			if(resContext.getStatus() == javax.ws.rs.core.Response.Status.UNAUTHORIZED.getStatusCode()) {
+				return;
+			}
+			
+			if(resContext.getStatus() == javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()) {
+				return;
+			}
+			
+			/*
+			 * After login success, we are putting session id in cookies
+			 */
+			if(StringUtils.endsWith(url, "/users/login")) {
+				
+				JSONObject respObj = new JSONObject(json);
+				
+				if(Status.STATUSCODE_FAIL.intValue() == respObj.getInt("statusCode")) {
+					return;
+				}
+				
+				JSONObject data = respObj.getJSONObject("data");
+				
+				resContext.getHeaders().add("Set-Cookie", new NewCookie(AppConstants.USER_IDENTIFIER, 
+						data.getString("loginSessionId")) {
+
+					public int getMaxAge() {
+						return 24 * 60 * 60;
+					}
+
+					public boolean isHttpOnly() {
+						return false;
+					}
+
+					public boolean isSecure() {
+						return false;
+					}
+
+					public String getPath() {
+						return "/";
+					}
+					
+					
+					
+				});
+				
+			} else if (StringUtils.contains(url, "/logout/")) {
+				
+				// At the time of logout, remove the cookie
+				resContext.getCookies().remove(AppConstants.USER_IDENTIFIER);
+				
+				
+			} else {
+				// If the user is accessing after login urls
+				
+				Long loginSesId = Long.parseLong(SecurityUtils.decode(PropertyUtil.getProperty("HS256_KEY"), 
+						reqContext.getCookies().get(AppConstants.USER_IDENTIFIER).getValue()));
+
+				LoginMaster loginMaster = dao.getLoginMaster(loginSesId);
+				
+				if(loginMaster != null) {
+					
+					loginMaster.setSessionTime(new Date());
+					
+					dao.updateLoginMaster(loginMaster);
+					
+				} else {
+					logger.error("No session identified while updating the login session");
+				}
+			}
+		}
+	}
+
+	/**
+	 * This will execute is exception occures for any request processing then it will be logged  
+	 */
+	public Response toResponse(Throwable t) {
+		VsoftResponse response = new VsoftResponse();
+		logger.error("Exception occured in the call", t);
+		
+		if(t instanceof UserMgmtException) {
+			response.setStatusCode(Status.STATUSCODE_FAIL);
+			response.setMessage(((UserMgmtException)t).getErroMsg());
+			response.setStatus(Status.STATUS_FAIL);
+			return Response.serverError().entity(response).build();
+		} else {
+			response.setStatusCode(Status.STATUSCODE_ERROR);
+			response.setMessage(PropertyUtil.getProperty("UNKNOWN_ERROR_MSG"));
+			response.setStatus(Status.STATUS_ERROR);
+			return Response.serverError().status(javax.ws.rs.core.Response.Status.UNAUTHORIZED).entity(response).build();
+		}
+	}
+	
+	public static void main(String[] args) {
+		String url = "/v1/fi/institute/5/";
+		
+		url = StringUtils.substring(url, 7);
+		
+		url = StringUtils.substring(url, 0, StringUtils.indexOf(url, "/"));
+		
+		System.out.println(url);
+		
+		
+	}
+
+}

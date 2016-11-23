@@ -1,0 +1,21 @@
+package com.vsoftcorp.usermgmt.res;
+
+public class ChPwdFailureRes {
+
+	private Boolean isCurrentPasswordMatched;
+	private Boolean isOldPasswordRepeated;
+	
+	public Boolean getIsCurrentPasswordMatched() {
+		return isCurrentPasswordMatched;
+	}
+	public void setIsCurrentPasswordMatched(Boolean isCurrentPasswordMatched) {
+		this.isCurrentPasswordMatched = isCurrentPasswordMatched;
+	}
+	public Boolean getIsOldPasswordRepeated() {
+		return isOldPasswordRepeated;
+	}
+	public void setIsOldPasswordRepeated(Boolean isOldPasswordRepeated) {
+		this.isOldPasswordRepeated = isOldPasswordRepeated;
+	}
+	
+}

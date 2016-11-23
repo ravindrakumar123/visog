@@ -1,0 +1,33 @@
+package com.vsoftcorp.usermgmt.dao;
+
+import java.util.List;
+
+import com.vsoftcorp.usermgmt.model.AccessLinks;
+import com.vsoftcorp.usermgmt.model.InstitutionMaster;
+import com.vsoftcorp.usermgmt.model.Roles;
+
+public interface RoleDao {
+
+	public Long saveRoles(Roles roles);
+
+	public List<Roles> getRoles(InstitutionMaster institutionMaster);
+
+	public Roles getRole(Long roleId);
+
+	public Boolean deleteRole(Long roleId);
+
+	public Long saveAccessLinks(AccessLinks accessLinks);
+
+	public List<AccessLinks> getAccessLinks(InstitutionMaster institutionMaster);
+
+	public AccessLinks getAccessLink(Long accessLinkId);
+
+	public Boolean deleteAccessLink(Long accessLinkId);
+
+	public void updateRole(Roles role);
+
+	public void updateAccessLink(AccessLinks accessLinks);
+
+	public AccessLinks getAccessLink(InstitutionMaster institutionMaster, String accessLinkName);
+
+}

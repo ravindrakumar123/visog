@@ -1,0 +1,182 @@
+package com.vsoftcorp.usermgmt.daoimpl;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.inject.Singleton;
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+import javax.transaction.Transactional;
+
+import com.vsoftcorp.usermgmt.dao.RoleDao;
+import com.vsoftcorp.usermgmt.model.AccessLinks;
+import com.vsoftcorp.usermgmt.model.InstitutionMaster;
+import com.vsoftcorp.usermgmt.model.Roles;
+
+@Singleton
+@Transactional
+public class RoleDaoImpl implements RoleDao {
+
+	@PersistenceContext(unitName = "VsoftUserManagement")
+	private EntityManager em;
+
+	/**
+	 * This method save the roles and returns role Id  
+	 */
+	public Long saveRoles(Roles roles) {
+		em.persist(roles);
+		return roles.getRoleId();
+	}
+
+	/**
+	 * This method returns the roles for the given institution Id
+	 */
+	public List<Roles> getRoles(InstitutionMaster institutionMaster) {
+
+		CriteriaBuilder qb = em.getCriteriaBuilder();
+		CriteriaQuery<Roles> cq = qb.createQuery(Roles.class);
+		Root<Roles> roles = cq.from(Roles.class);
+
+		List<Predicate> predicates = new ArrayList<Predicate>();
+
+		predicates.add(qb.equal(roles.get("instId"), institutionMaster));
+
+		cq.select(roles);
+
+		cq.where(predicates.toArray(new Predicate[] {}));
+
+		return em.createQuery(cq).getResultList();
+	}
+
+	/**
+	 * This method returns the role for the given roleId 
+	 */
+	public Roles getRole(Long roleId) {
+		return em.find(Roles.class, roleId);
+	}
+	
+	/**
+	 * This method returns true if the role existed with the given name else false 
+	 */
+	public Boolean isRoleExisted(String roleName) {
+		
+		CriteriaBuilder qb = em.getCriteriaBuilder();
+		CriteriaQuery<Long> cq = qb.createQuery(Long.class);
+	    Root<Roles> root  = cq.from(Roles.class);			
+
+	    cq.select(qb.count(root));
+
+	    cq.where(qb.equal(qb.lower(root.get("roleName")), roleName.toLowerCase()));
+
+	    cq.select(qb.count(root));
+
+		return (em.createQuery(cq).getSingleResult().intValue() != 0);
+	}
+	
+	/**
+	 * This method updates the role data by using role
+	 */
+	public void updateRole(Roles role) {
+		em.merge(role);
+	}
+
+	/**
+	 * This method deletes the role for the given roleId 
+	 */
+	public Boolean deleteRole(Long roleId) {
+		Query query = em.createQuery("DELETE FROM Roles WHERE roleId = :roleId");
+
+		query.setParameter("roleId", roleId);
+
+		int deletionCount = query.executeUpdate();
+
+		return (deletionCount != 0);
+	}
+
+	/**
+	 * This method save the accessLink and returns the accessLink Id 
+	 */
+	public Long saveAccessLinks(AccessLinks accessLinks) {
+		em.persist(accessLinks);
+		return accessLinks.getAccessLinkId();
+	}
+
+	/**
+	 * This method returns the accessLinks for the given institution Id 
+	 */
+	public List<AccessLinks> getAccessLinks(InstitutionMaster institutionMaster) {
+		CriteriaBuilder qb = em.getCriteriaBuilder();
+		CriteriaQuery<AccessLinks> cq = qb.createQuery(AccessLinks.class);
+		Root<AccessLinks> accessLinks = cq.from(AccessLinks.class);
+
+		cq.select(accessLinks);
+
+		cq.where(qb.equal(accessLinks.get("instId"), institutionMaster));
+
+		return em.createQuery(cq).getResultList();
+	}
+	
+	/**
+	 * This method returns the accessLink for the given accessLink Id
+	 */
+	public AccessLinks getAccessLink(Long accessLinkId) {
+		return em.find(AccessLinks.class, accessLinkId);
+	}
+
+
+	/**
+	 * This method updates the accessLink for the given accessLink 
+	 */
+	public void updateAccessLink(AccessLinks accessLinks) {
+		em.merge(accessLinks);
+	}
+
+	/**
+	 * This method deletes the accessLink for the given accessLink Id
+	 */
+	public Boolean deleteAccessLink(Long accessLinkId) {
+		Query query = em
+				.createQuery("DELETE FROM AccessLinks WHERE accessLinkId = :accessLinkId");
+
+		query.setParameter("accessLinkId", accessLinkId);
+
+		int deletionCount = query.executeUpdate();
+
+		return (deletionCount != 0);
+	}
+
+	/**
+	 *  Returns the AccessLink for the given name and institution
+	 */
+	public AccessLinks getAccessLink(InstitutionMaster institutionMaster, String accessLinkName) {
+
+		try {
+			CriteriaBuilder qb = em.getCriteriaBuilder();
+			CriteriaQuery<AccessLinks> cq = qb.createQuery(AccessLinks.class);
+			Root<AccessLinks> accessLinks = cq.from(AccessLinks.class);
+
+			List<Predicate> predicates = new ArrayList<Predicate>();
+
+			// ignore institution for master data
+//			predicates.add(qb.equal(accessLinks.get("instId"), institutionMaster));
+			predicates.add(qb.equal(accessLinks.get("name"), accessLinkName));
+
+			cq.select(accessLinks);
+
+			cq.where(predicates.toArray(new Predicate[] {}));
+
+			return em.createQuery(cq).getSingleResult();
+		} catch (NoResultException nre) {
+			return null;
+		} catch (Exception e) {
+			throw e;
+		}
+	}
+
+}

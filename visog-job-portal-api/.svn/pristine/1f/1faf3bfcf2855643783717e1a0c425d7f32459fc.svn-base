@@ -1,0 +1,44 @@
+package com.vsoftcorp.usermgmt.res;
+
+public class SuccessLoginAttemptsResponse {
+
+	private Long loginMasterId;
+	private String emailId;
+	private String loginTime;
+	private String logOutTime;
+	private Boolean isLoggedIn;
+	
+	public Long getLoginMasterId() {
+		return loginMasterId;
+	}
+	public void setLoginMasterId(Long loginMasterId) {
+		this.loginMasterId = loginMasterId;
+	}
+	public String getEmailId() {
+		return emailId;
+	}
+	public void setEmailId(String emailId) {
+		this.emailId = emailId;
+	}
+	public String getLoginTime() {
+		return loginTime;
+	}
+	public void setLoginTime(String loginTime) {
+		this.loginTime = loginTime;
+	}
+	public String getLogOutTime() {
+		return logOutTime;
+	}
+	public void setLogOutTime(String logOutTime) {
+		this.logOutTime = logOutTime;
+	}
+	public Boolean getIsLoggedIn() {
+		return isLoggedIn;
+	}
+	public void setIsLoggedIn(Boolean isLoggedIn) {
+		this.isLoggedIn = isLoggedIn;
+	}
+	
+	
+	
+}

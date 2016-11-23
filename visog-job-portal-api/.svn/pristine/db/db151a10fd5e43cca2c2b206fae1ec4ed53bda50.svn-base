@@ -1,0 +1,6 @@
+USER_ONBOARDING_MSG = Dear {0}, Thank you for enrolling in CACU &#39;s on-line Internet banking system! Enclosed is your temporary password. Please use this to sign into your account at www.cacu.com. You will then be asked to change your user id and password. If you are unable to access the system in the future, we would be able to reset your password to the temporary one referenced below. Otherwise, for security and privacy reasons, we will only be able to communicate your temporary password by mail, or in person upon presentment of proper identification.If you have any questions, please call 940-686-7000. Once again, thank you for allowing CACU the opportunity to serve you! Password is : {1}
+
+OTP_MSG = One time password (OTP) for your activity is {0}. Bank never calls to verify your OTP. Do not disclose OTP to anyone.
+
+FORGOT_PWD_MSG = Dear {0},As per your request we have reset your password. Your new password is {1}. For security reasons we recommend you not to share your password with anyone including bank staff. You are requested to change this password on login.
+

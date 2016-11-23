@@ -1,0 +1,293 @@
+package com.vsoftcorp.usermgmt.rest.controller;
+ 
+import javax.inject.Inject;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.CookieParam;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+
+import org.apache.log4j.Logger;
+
+import com.vsoftcorp.usermgmt.constants.Status;
+import com.vsoftcorp.usermgmt.req.ChangePwdReq;
+import com.vsoftcorp.usermgmt.req.EnrollUserReq;
+import com.vsoftcorp.usermgmt.req.LoginReq;
+import com.vsoftcorp.usermgmt.req.OTPReq;
+import com.vsoftcorp.usermgmt.res.ChPwdFailureRes;
+import com.vsoftcorp.usermgmt.res.ForgotPasswordRes;
+import com.vsoftcorp.usermgmt.res.LoginRes;
+import com.vsoftcorp.usermgmt.res.LoginSuccessRes;
+import com.vsoftcorp.usermgmt.res.VsoftResponse;
+import com.vsoftcorp.usermgmt.service.UserService;
+import com.vsoftcorp.usermgmt.utils.ParamUtils;
+ 
+@Path("/v1/fi")
+public class UserController {
+	
+	private static final Logger logger = Logger.getLogger(UserController.class);
+	
+	private @CookieParam("User-Identifier") String userIdentifier;
+	
+	@Inject
+	private UserService service; 
+ 
+	/**
+	 * This method generates the otp for the given user id
+	 * 
+	 * @param instId
+	 * @param userId
+	 * @param otpReq
+	 * @return
+	 */
+	@POST
+	@Consumes("application/json")
+	@Produces("application/json")
+	@Path("/{id}/users/{userId}/otp")
+	public VsoftResponse generateOtp(@PathParam("id") String instStr, @PathParam("userId") String userStr,
+																							OTPReq otpReq) {
+		
+		Long instId = ParamUtils.getLongParam(instStr, userIdentifier);
+		Long userId = ParamUtils.getLongParam(userStr, userIdentifier);
+
+		VsoftResponse response = new VsoftResponse();
+		String otp = service.generateOTP(instId, userId, otpReq);
+		
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("OTP generated Successfully and sent to the user");
+		response.setStatus(Status.STATUS_SUCCESS);
+ 
+		logger.info("OTP generated Successfully and sent to the userOTP : " + otp);
+
+		return response;
+	}
+	
+	/**
+	 * This method verifies the otp for the given user id
+	 * 
+	 * @param instId
+	 * @param userId
+	 * @param otpReq
+	 * @return
+	 */
+	@POST
+	@Consumes("application/json")
+	@Produces("application/json")
+	@Path("/{id}/users/{userId}/otp/verify")
+	public VsoftResponse verifyOtp(@PathParam("id") String instStr, @PathParam("userId") String userStr, 
+																								OTPReq otpReq) {
+		
+		Long instId = ParamUtils.getLongParam(instStr, userIdentifier);
+		Long userId = ParamUtils.getLongParam(userStr, userIdentifier);
+
+		VsoftResponse response = new VsoftResponse();
+		Boolean isOtpVerified = service.verifyOTP(instId, userId, otpReq);
+		
+		if(isOtpVerified) {
+			response.setStatusCode(Status.STATUSCODE_SUCCESS);
+			response.setMessage("OTP verified successfully");
+			response.setStatus(Status.STATUS_SUCCESS);
+	 
+			logger.info("OTP verified successfully");
+		} else {
+			response.setStatusCode(Status.STATUSCODE_FAIL);
+			response.setMessage("OTP verification failed");
+			response.setStatus(Status.STATUS_FAIL);
+	 
+			logger.info("OTP verification failed");
+		}
+
+		return response;
+	}
+	
+	/**
+	 *  This method is invoked when user is logging in
+	 * @param instId
+	 * @param loginReq
+	 * @return
+	 */
+	@POST
+	@Consumes("application/json")
+	@Produces("application/json")
+	@Path("/{id}/users/login")
+	public VsoftResponse login(@PathParam("id") String instStr, LoginReq loginReq) {
+
+		Long instId = ParamUtils.getLongParam(instStr, userIdentifier);
+
+		VsoftResponse response = new VsoftResponse();
+		LoginRes loginRes = service.login(instId, loginReq);
+		
+		// If the user login is success
+		if(loginRes instanceof LoginSuccessRes) {
+			response.setData(loginRes);
+			response.setStatusCode(Status.STATUSCODE_SUCCESS);
+			response.setMessage("User logged in successfully");
+			response.setStatus(Status.STATUS_SUCCESS);
+	 
+			logger.info("User logged in successfully");
+		} else {
+			// If the User login is failure
+			response.setData(loginRes);
+			response.setStatusCode(Status.STATUSCODE_FAIL);
+			response.setMessage("User login failed");
+			response.setStatus(Status.STATUS_FAIL);
+	 
+			logger.info("User logged in failed");
+		}
+
+		return response;
+	}
+	
+	/**
+	 * This is first login user call
+	 * 
+	 * @param instId
+	 * @param userId
+	 * @param enrollUserReq
+	 * @return
+	 */
+	@POST
+	@Consumes("application/json")
+	@Produces("application/json")
+	@Path("/{id}/users/{userId}/enrollUser")
+	public VsoftResponse enrollUser(@PathParam("id") String instStr, @PathParam("userId") String userStr, 
+																	EnrollUserReq enrollUserReq) {
+		
+		Long instId = ParamUtils.getLongParam(instStr, userIdentifier);
+		Long userId = ParamUtils.getLongParam(userStr, userIdentifier);
+
+		VsoftResponse response = new VsoftResponse();
+		service.enrollUser(instId, userId, enrollUserReq);
+		
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Enrolled new user Successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+ 
+		logger.info("Enrolled new user Successfully");
+
+		return response;
+	}
+		
+	/**
+	 * Change password call
+	 * 
+	 * @param instId
+	 * @param userId
+	 * @param changePwdReq
+	 * @return
+	 */
+	@PUT
+	@Consumes("application/json")
+	@Produces("application/json")
+	@Path("/{id}/users/{userId}/changePassword")
+	public VsoftResponse changePassword(@PathParam("id") String instStr, @PathParam("userId") String userStr, 
+															ChangePwdReq changePwdReq) {
+		
+		Long instId = ParamUtils.getLongParam(instStr, userIdentifier);
+		Long userId = ParamUtils.getLongParam(userStr, userIdentifier);
+
+		VsoftResponse response = new VsoftResponse();
+		ChPwdFailureRes failureRes = service.changePassword(instId, userId, changePwdReq);
+		
+		// If password change failed
+		if(failureRes != null) {
+			response.setData(failureRes);
+			response.setStatusCode(Status.STATUSCODE_FAIL);
+			response.setMessage("Password change failed");
+			response.setStatus(Status.STATUS_FAIL);
+	 
+			logger.info("Password change failed");
+
+		} else {//success
+			response.setStatusCode(Status.STATUSCODE_SUCCESS);
+			response.setMessage("User password changed successfully");
+			response.setStatus(Status.STATUS_SUCCESS);
+	 
+			logger.info("User password changed successfully");
+
+		}
+		
+		return response;
+	}
+		
+	/**
+	 * Logout call
+	 * 
+	 * @param instId
+	 * @param userId
+	 * @param request
+	 * @return
+	 */
+	@POST
+	@Produces("application/json")
+	@Path("/{id}/users/{userId}/logout")
+	public VsoftResponse logout(@PathParam("id") String instStr, @PathParam("userId") String userStr) {
+		
+		Long instId = ParamUtils.getLongParam(instStr, userIdentifier);
+		Long userId = ParamUtils.getLongParam(userStr, userIdentifier);
+
+		VsoftResponse response = new VsoftResponse();
+		service.logout(userIdentifier);
+		
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("User logged out successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+ 
+		logger.info("User logged out successfully");
+
+		return response;
+	}
+		
+	/**
+	 * This method generates the otp for the given user id
+	 * 
+	 * @param instId
+	 * @param userId
+	 * @param otpReq
+	 * @return
+	 */
+	@POST
+	@Produces("application/json")
+	@Path("/{id}/users/forgotPassword/{userName}")
+	public VsoftResponse forgotPassword(@PathParam("id") String instStr, @PathParam("userName") String userName) {
+		
+		Long instId = ParamUtils.getLongParam(instStr, userIdentifier);
+		userName 	= ParamUtils.getStringParam(userName, userIdentifier);
+
+		VsoftResponse response = new VsoftResponse();
+		Boolean isOtp = service.forgotPassword(instId, userName);
+		
+		if(isOtp == null) {
+			response.setStatusCode(Status.STATUSCODE_FAIL);
+			response.setMessage("No user exists with the given data");
+			response.setStatus(Status.STATUS_FAIL);
+	 
+			logger.info("No user exists with the given data");
+		} else if(isOtp) {
+			ForgotPasswordRes data = new ForgotPasswordRes();
+			data.setIsOtp(isOtp);
+			response.setData(data);
+			response.setStatusCode(Status.STATUSCODE_SUCCESS);
+			response.setMessage("OTP sent successfully to the user");
+			response.setStatus(Status.STATUS_SUCCESS);
+	 
+			logger.info("OTP sent successfully to the user");
+		} else {
+			ForgotPasswordRes data = new ForgotPasswordRes();
+			data.setIsOtp(isOtp);
+			response.setData(data);
+			response.setStatusCode(Status.STATUSCODE_SUCCESS);
+			response.setMessage("New password alert sent successfully to the user");
+			response.setStatus(Status.STATUS_SUCCESS);
+	 
+			logger.info("New password alert sent successfully to the user");
+		}
+		
+
+		return response;
+	}
+	
+
+}

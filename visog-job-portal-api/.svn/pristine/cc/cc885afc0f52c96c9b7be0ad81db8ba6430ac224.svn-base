@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.1"
+	xmlns="http://xmlns.jcp.org/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd" >
+      
+	<!-- <persistence-unit name="VsoftUserManagement" transaction-type="RESOURCE_LOCAL"> -->
+	<persistence-unit name="VsoftUserManagement" transaction-type="JTA">
+		<jta-data-source>usermgmtDS</jta-data-source>
+		<class>com.vsoftcorp.usermgmt.model.AccessLinks</class>
+		<class>com.vsoftcorp.usermgmt.model.InstitutionMaster</class>
+		<class>com.vsoftcorp.usermgmt.model.LoginMaster</class>
+		<class>com.vsoftcorp.usermgmt.model.RolePrevilegeLinks</class>
+		<class>com.vsoftcorp.usermgmt.model.Roles</class>
+		<class>com.vsoftcorp.usermgmt.model.SecurityQuestions</class>
+		<class>com.vsoftcorp.usermgmt.model.User</class>
+		<class>com.vsoftcorp.usermgmt.model.UserSecurityQuestions</class>
+		<class>com.vsoftcorp.usermgmt.model.UserXfactors</class>
+		<class>com.vsoftcorp.usermgmt.model.UserOTP</class>
+		<class>com.vsoftcorp.usermgmt.model.PasswordRules</class>
+		<class>com.vsoftcorp.usermgmt.model.UserPasswords</class>
+		<class>com.vsoftcorp.usermgmt.model.UserOtpPreferences</class>
+		<class>com.vsoftcorp.usermgmt.model.InstituteParams</class>
+		<exclude-unlisted-classes />
+
+		<properties>
+<!-- 			<property name="javax.persistence.jdbc.driver" value="oracle.jdbc.OracleDriver" />
+			<property name="javax.persistence.jdbc.url" value="jdbc:oracle:thin:@192.168.2.9:1521:orcl" />
+			<property name="javax.persistence.jdbc.user" value="omni_core_carter_dev" />
+			<property name="javax.persistence.jdbc.password" value="omni_core_carter_dev" /> -->
+
+			<property name="hibernate.dialect" value="org.hibernate.dialect.Oracle10gDialect" />
+			<property name="hibernate.show_sql" value="true" />
+		</properties>
+	</persistence-unit>
+</persistence>
+
+
+

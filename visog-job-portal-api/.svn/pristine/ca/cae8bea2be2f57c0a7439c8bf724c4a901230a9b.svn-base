@@ -1,0 +1,18 @@
+package com.vsoftcorp.usermgmt.dao;
+
+import java.util.Date;
+import java.util.List;
+
+import com.vsoftcorp.usermgmt.model.LoginMaster;
+import com.vsoftcorp.usermgmt.model.User;
+
+public interface ReportDao {
+
+	public List<LoginMaster> getAuditLoginReport();
+
+	public List<LoginMaster> getFailureLoginAttemptsReport(User user);
+
+	public List<LoginMaster> getSuccessLoginAttemptsReport(Date startDate,
+			Date endDate);
+
+}

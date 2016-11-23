@@ -1,0 +1,583 @@
+package com.vsoftcorp.usermgmt.rest.controller;
+ 
+import java.util.List;
+
+import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.CookieParam;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.log4j.Logger;
+
+import com.vsoftcorp.usermgmt.constants.Status;
+import com.vsoftcorp.usermgmt.exceptions.UserMgmtException;
+import com.vsoftcorp.usermgmt.req.BulkUsersReq;
+import com.vsoftcorp.usermgmt.req.OTPPreferencesReqs;
+import com.vsoftcorp.usermgmt.req.PasswordRulesReq;
+import com.vsoftcorp.usermgmt.req.UserOTPPreferencesReqs;
+import com.vsoftcorp.usermgmt.req.UserReq;
+import com.vsoftcorp.usermgmt.req.UserSearchReq;
+import com.vsoftcorp.usermgmt.req.UserStatusReq;
+import com.vsoftcorp.usermgmt.req.UsersReq;
+import com.vsoftcorp.usermgmt.req.UsersStatusReq;
+import com.vsoftcorp.usermgmt.res.PasswordRulesRes;
+import com.vsoftcorp.usermgmt.res.VsoftResponse;
+import com.vsoftcorp.usermgmt.rest.client.UserMgmtRestClient;
+import com.vsoftcorp.usermgmt.service.AdminService;
+import com.vsoftcorp.usermgmt.utils.ParamUtils;
+import com.vsoftcorp.usermgmt.utils.PropertyUtil;
+ 
+@Path("/v1/fi")
+public class AdminController {
+	
+	private static final Logger logger = Logger.getLogger(AdminController.class);
+	
+	private @CookieParam("User-Identifier") String userIdentifier;
+	
+	@Inject
+	private AdminService service;
+ 
+	/**
+	 * This method creates the user for the given institution
+	 * 
+	 * @param institutionId
+	 * @param userReq
+	 * @return
+	 */
+	@POST
+	@Consumes("application/json")
+	@Produces("application/json")
+	@Path("/{id}/users")
+	public VsoftResponse createUser(@PathParam("id") String instStr, UserReq userReq) {
+		
+
+		Long institutionId = ParamUtils.getLongParam(instStr, userIdentifier);
+		try {
+			VsoftResponse response = new VsoftResponse();
+			if(service.saveUser(userReq)) {
+				response.setStatusCode(Status.STATUSCODE_SUCCESS);
+				response.setMessage("User Created Successfully");
+				response.setStatus(Status.STATUS_SUCCESS);
+		 
+				logger.info("User Created Successfully");
+
+			} else {
+				response.setStatusCode(Status.STATUSCODE_FAIL);
+				response.setMessage("This user already exists");
+				response.setStatus(Status.STATUS_FAIL);
+		 
+				logger.error("This user already exists");
+			}
+			return response;
+			
+		} catch(Exception e) {
+			// Deleting SSO User, other than UserMgmtException
+			UserMgmtRestClient.sendDeleteRequest(PropertyUtil.getSSOProperty("sso.url") + 
+																					"user/" + userReq.getEmailId());
+			throw e;
+		}
+	}	
+
+	/**
+	 * This method updates the user data for the given user id
+	 * 
+	 * @param institutionId
+	 * @param userId
+	 * @param userReq
+	 * @return
+	 */
+	@PUT
+	@Consumes("application/json")
+	@Produces("application/json")
+	@Path("/{id}/users/{userId}")
+	public VsoftResponse updateUser(@PathParam("id") String instStr, 
+									@PathParam("userId") String uIdStr, UserReq userReq) {
+		
+		Long institutionId = ParamUtils.getLongParam(instStr, userIdentifier);
+		Long userId = ParamUtils.getLongParam(uIdStr, userIdentifier);
+		
+		VsoftResponse response = new VsoftResponse();
+		service.updateUser(userReq, userId);
+		
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("User Updated Successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+ 
+		logger.info("User Updated Successfully : "+userId);
+
+		return response;
+	}
+	
+	/**
+	 * This method deletes the user data for the given user id
+	 * 
+	 * @param instId
+	 * @param userId
+	 * @return
+	 */
+	@DELETE
+	@Produces("application/json")
+	@Path("/{id}/users/{userId}")
+	public VsoftResponse deleteUser(@PathParam("id") String instStr, 
+																	@PathParam("userId") String uIdStr) {
+		
+		Long instId = ParamUtils.getLongParam(instStr, userIdentifier);
+		Long userId = ParamUtils.getLongParam(uIdStr, userIdentifier);
+
+		VsoftResponse response = new VsoftResponse();
+		if(service.deleteUser(userId)) {
+			response.setStatusCode(Status.STATUSCODE_SUCCESS);
+			response.setMessage("User Deleted Successfully");
+			response.setStatus(Status.STATUS_SUCCESS);
+	 
+			logger.info("User Deleted Successfully : " + userId);
+		} else {
+			response.setStatusCode(Status.STATUSCODE_FAIL);
+			response.setMessage("This User already Deleted");
+			response.setStatus(Status.STATUS_FAIL);
+	 
+			logger.error("User Deleted Failed : " + userId + ". This user already exists.");
+		}
+		
+		return response;
+	}
+	
+	/**
+	 * This method returns the user for the given user id
+	 * 
+	 * @param instId
+	 * @param userId
+	 * @return
+	 */
+	@GET
+	@Produces("application/json")
+	@Path("/{id}/users/{userId}")
+	public VsoftResponse getUser(@PathParam("id") String instStr, @PathParam("userId") String uIdStr) {
+		
+		Long instId = ParamUtils.getLongParam(instStr, userIdentifier);
+		Long userId = ParamUtils.getLongParam(uIdStr, userIdentifier);
+
+		VsoftResponse response = new VsoftResponse();
+		response.setData(service.getUser(userId));
+		
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("User data fetched Successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+ 
+		logger.info("User data fetched Successfully : " + userId);
+	
+				
+		return response;
+	}
+	
+	/**
+	 * This method returns all the users for the given institution id
+	 * 
+	 * @param instId
+	 * @return
+	 */
+	@GET
+	@Produces("application/json")
+	@Path("/{id}/users")
+	public VsoftResponse getUsers(@PathParam("id") String instStr, @Context HttpServletRequest request) {
+
+		Long instId = ParamUtils.getLongParam(instStr, userIdentifier);
+
+		UserSearchReq userSearchReq = new UserSearchReq();
+		
+		String userName 		= request.getParameter("userName");
+		String routingNumber 	= request.getParameter("routingNumber");
+		String role 			= request.getParameter("role");
+		String status 			= request.getParameter("status");
+		String fromDate 		= request.getParameter("fromDate");
+		String toDate           = request.getParameter("toDate");
+		
+		
+		if(StringUtils.isNotBlank(userName)) {
+			userSearchReq.setUserName(ParamUtils.getStringParam(userName, userIdentifier));
+		}
+		
+		if(StringUtils.isNotBlank(routingNumber)) {
+			userSearchReq.setRoutingNumber(ParamUtils.getStringParam(routingNumber, userIdentifier));
+		}
+		
+		if(StringUtils.isNotBlank(role)) {
+			userSearchReq.setRole(ParamUtils.getLongParam(role, userIdentifier));
+		}
+		
+		if(StringUtils.isNotBlank(status)) {
+			userSearchReq.setStatus(ParamUtils.getStringParam(status, userIdentifier));
+		}
+		
+		if(StringUtils.isNotBlank(fromDate)) {
+			userSearchReq.setFromDate(ParamUtils.getStringParam(fromDate, userIdentifier));
+		}
+		if(StringUtils.isNotBlank(toDate)) {
+			userSearchReq.setToDate(ParamUtils.getStringParam(toDate, userIdentifier));
+		}
+		VsoftResponse response = new VsoftResponse();
+		response.setData(service.getUsers(instId, userSearchReq));
+		
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Users data fetched Successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+ 
+		logger.info("Users data fetched Successfully..");
+				
+		return response;
+	}
+	
+	/**
+	 * This method saves/updates the password rule for the given role id
+	 * 
+	 * @param institutionId
+	 * @param roleId
+	 * @param rulesReq
+	 * @return
+	 */
+	@POST
+	@Consumes("application/json")
+	@Produces("application/json")
+	@Path("/{id}/roles/{roleId}/passwordRules")
+	public VsoftResponse saveOrUpdatePasswordRule(@PathParam("id") String instStr, 
+								@PathParam("roleId") String roleIdStr, PasswordRulesReq rulesReq) {
+		
+		Long institutionId = ParamUtils.getLongParam(instStr, userIdentifier);
+		Long roleId = ParamUtils.getLongParam(roleIdStr, userIdentifier);
+		
+		VsoftResponse response = new VsoftResponse();
+		if(service.saveOrUpdatePasswordRules(institutionId, roleId, rulesReq)) {
+			response.setStatusCode(Status.STATUSCODE_SUCCESS);
+			response.setMessage("Password rule Created Successfully");
+			response.setStatus(Status.STATUS_SUCCESS);
+	 
+			logger.info("Password rule Created Successfully");
+		} else {
+			response.setStatusCode(Status.STATUSCODE_SUCCESS);
+			response.setMessage("Password rule Updated Successfully");
+			response.setStatus(Status.STATUS_SUCCESS);
+	 
+			logger.info("Password rule Updated Successfully");
+		}
+		
+		return response;
+	}	
+
+	/**
+	 * This method returns the password rule for the given role id
+	 * 
+	 * @param instId
+	 * @param roleId
+	 * @return
+	 */
+	@GET
+	@Produces("application/json")
+	@Path("/{id}/roles/{roleId}/passwordRules")
+	public VsoftResponse getPasswordRule(@PathParam("id") String instStr, @PathParam("roleId") String roleIdStr) {
+		
+		Long instId = ParamUtils.getLongParam(instStr, userIdentifier);
+		Long roleId = ParamUtils.getLongParam(roleIdStr, userIdentifier);
+
+		VsoftResponse response = new VsoftResponse();
+		
+		PasswordRulesRes passwordRulesRes = service.getPasswordRules(instId, roleId);
+		if(passwordRulesRes != null) {
+			response.setData(passwordRulesRes);
+			
+			response.setStatusCode(Status.STATUSCODE_SUCCESS);
+			response.setMessage("Password rule fetched Successfully");
+			response.setStatus(Status.STATUS_SUCCESS);
+	 
+			logger.info("Password rule fetched Successfully");
+		
+		} else {
+			response.setData(passwordRulesRes);
+			
+			response.setStatusCode(Status.STATUSCODE_FAIL);
+			response.setMessage("Password rule doesn't exist for this role");
+			response.setStatus(Status.STATUS_FAIL);
+	 
+			logger.info("Password rule doesn't exist for this role");
+		
+		}
+		
+		return response;
+	}
+	
+	/**
+	 * This method updates the user status for the given user id
+	 * 
+	 * @param institutionId
+	 * @param userId
+	 * @param statusReq
+	 * @return
+	 */
+	@PUT
+	@Consumes("application/json")
+	@Produces("application/json")
+	@Path("/{id}/users/{userId}/changestatus")
+	public VsoftResponse updateUserStatus(@PathParam("id") String instStr, 
+				@PathParam("userId") String uIdStr, UserStatusReq statusReq) {
+		
+		Long institutionId = ParamUtils.getLongParam(instStr, userIdentifier);
+		Long userId = ParamUtils.getLongParam(uIdStr, userIdentifier);
+
+		VsoftResponse response = new VsoftResponse();
+		service.updateUserStatus(institutionId, userId, statusReq);
+		
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("User status changed successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+ 
+		logger.info("User status changed successfully");
+
+		return response;
+	}
+	
+	/**
+	 * This method updates the password for the given user id
+	 * 
+	 * @param institutionId
+	 * @param userId
+	 * @return
+	 */
+	@PUT
+	@Produces("application/json")
+	@Path("/{id}/users/{userId}/resetPassword")
+	public VsoftResponse resetPassword(@PathParam("id") String instStr, @PathParam("userId") String uIdStr) {
+		
+		Long institutionId = ParamUtils.getLongParam(instStr, userIdentifier);
+		Long userId = ParamUtils.getLongParam(uIdStr, userIdentifier);
+
+		VsoftResponse response = new VsoftResponse();
+		service.resetPassword(userId);
+		
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("User password reset successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+ 
+		logger.info("User password reset successfully");
+
+		return response;
+	}
+
+	/**
+	 * This method deletes the given users data
+	 * 
+	 * @param instId
+	 * @param userId
+	 * @return
+	 */
+	@POST
+	@Produces("application/json")
+	@Path("/{id}/deleteUsers")
+	public VsoftResponse deleteUsers(@PathParam("id") String instStr, UsersReq usersReq) {
+		
+		Long instId = ParamUtils.getLongParam(instStr, userIdentifier);
+
+		VsoftResponse response = new VsoftResponse();
+		if(service.deleteUsers(usersReq.getUsers())) {
+			response.setStatusCode(Status.STATUSCODE_SUCCESS);
+			response.setMessage("Users Deleted Successfully");
+			response.setStatus(Status.STATUS_SUCCESS);
+	 
+			logger.info("Users Deleted Successfully");
+		} else {
+			response.setStatusCode(Status.STATUSCODE_FAIL);
+			response.setMessage("Some of the users might already Deleted");
+			response.setStatus(Status.STATUS_FAIL);
+	 
+			logger.error("Users Deleted Failed : ");
+		}
+		
+		return response;
+	}
+	
+	/**
+	 * This method updates the password for the given user ids
+	 * 
+	 * @param institutionId
+	 * @param userId
+	 * @return
+	 */
+	@POST
+	@Produces("application/json")
+	@Path("/{id}/resetPasswords")
+	public VsoftResponse resetPasswords(@PathParam("id") String instStr, UsersReq usersReq) {
+		
+		Long institutionId = ParamUtils.getLongParam(instStr, userIdentifier);
+
+		VsoftResponse response = new VsoftResponse();
+		service.resetPasswords(usersReq.getUsers());
+		
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Users password reset successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+ 
+		logger.info("Users password reset successfully");
+
+		return response;
+	}
+
+	/**
+	 * This method updates the given status for the given users
+	 * 
+	 * @param institutionId
+	 * @param usersStatusReq
+	 * @return
+	 */
+	@POST
+	@Consumes("application/json")
+	@Produces("application/json")
+	@Path("/{id}/changestatus")
+	public VsoftResponse updateUsersStatus(@PathParam("id") String instStr, UsersStatusReq usersStatusReq) {
+		
+		Long institutionId = ParamUtils.getLongParam(instStr, userIdentifier);
+
+		VsoftResponse response = new VsoftResponse();
+		service.updateUserStatus(institutionId, usersStatusReq);
+		
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("User status changed successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+ 
+		logger.info("User status changed successfully");
+
+		return response;
+	}
+	
+	/**
+	 * Save OTP Preferences for the given user
+	 * 
+	 * @param instId
+	 * @param userId
+	 * @param otpPreferencesReqs
+	 * @return
+	 */
+	@POST
+	@Consumes("application/json")
+	@Produces("application/json")
+	@Path("/{id}/users/{userId}/otpPreferences")
+	public VsoftResponse saveOtpPreferences(@PathParam("id") String instStr, @PathParam("userId") String uIdStr, 
+										OTPPreferencesReqs otpPreferencesReqs) {
+		
+		Long instId = ParamUtils.getLongParam(instStr, userIdentifier);
+		Long userId = ParamUtils.getLongParam(uIdStr, userIdentifier);
+
+		VsoftResponse response = new VsoftResponse();
+		 service.saveOtpPreferences(instId, userId, otpPreferencesReqs.getPreferences());
+		
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("User OTP preferences saved successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+ 
+		logger.info("User OTP preferences saved successfully");
+
+		return response;
+	}
+		
+	/**
+	 * Override OTP Preferences for given users
+	 * 
+	 * @param instId
+	 * @param otpPreferencesReqs
+	 * @return
+	 */
+	@POST
+	@Consumes("application/json")
+	@Produces("application/json")
+	@Path("/{id}/otpPreferences")
+	public VsoftResponse saveOtpPreferences(@PathParam("id") String instStr, UserOTPPreferencesReqs otpPreferencesReqs) {
+		
+		Long instId = ParamUtils.getLongParam(instStr, userIdentifier);
+
+		VsoftResponse response = new VsoftResponse();
+		 service.saveOtpPreferences(instId, otpPreferencesReqs);
+
+			
+		 
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Users OTP preferences saved successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+ 
+		logger.info("Users OTP preferences saved successfully");
+
+		return response;
+	}
+
+	/**
+	 * Get OTP Preferences
+	 * 
+	 * @param instId
+	 * @param userId
+	 * @return
+	 */
+	@GET
+	@Produces("application/json")
+	@Path("/{id}/users/{userId}/otpPreferences")
+	public VsoftResponse getOtpPreferences(@PathParam("id") String instStr, @PathParam("userId") String uIdStr) {
+		
+		Long instId = ParamUtils.getLongParam(instStr, userIdentifier);
+		Long userId = ParamUtils.getLongParam(uIdStr, userIdentifier);
+		
+		VsoftResponse response = new VsoftResponse();
+		response.setData(service.getOtpPreferences(instId, userId));
+		
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("User OTP preferences fatched successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+ 
+		logger.info("User OTP preferences fatched successfully");
+
+		return response;
+	}
+	/**
+	 * This method creates the user for the given institution
+	 * 
+	 * @param institutionId
+	 * @param userReq
+	 * @return
+	 */
+	
+	@POST
+	@Consumes("application/json")
+	@Produces("application/json")
+	@Path("/{id}/onboardusers")
+	public VsoftResponse createUsers(@PathParam("id") String instStr, BulkUsersReq bulkuserReq) {
+		
+
+		Long institutionId = ParamUtils.getLongParam(instStr, userIdentifier);
+		try {
+			VsoftResponse response = new VsoftResponse();
+			List<String> usersList= service.saveUsers(bulkuserReq);
+			logger.info("User id is  : "+usersList);
+			
+			/*UserResponse data = new UserResponse();
+			data.setUserId(userId);*/
+			response.setData(Base64.encodeBase64String(StringUtils.join(usersList, "\n").getBytes()));
+			response.setStatusCode(Status.STATUSCODE_SUCCESS);
+			response.setMessage("User Created Successfully");
+			response.setStatus(Status.STATUS_SUCCESS);
+	 
+			logger.info("User Created Successfully : " + usersList);
+
+			return response;
+		} catch(UserMgmtException e) {
+			throw e;
+		} catch(Exception e) {
+			// Deleting SSO User, other than UserMgmtException
+			//UserMgmtRestClient.sendDeleteRequest(PropertyUtil.getSSOProperty("sso.url") + "user/" + userReq.getEmailId());
+			throw e;
+		}
+	}		
+}

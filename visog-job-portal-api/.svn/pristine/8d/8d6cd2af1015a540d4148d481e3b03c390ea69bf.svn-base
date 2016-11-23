@@ -1,0 +1,31 @@
+package com.vsoftcorp.usermgmt.service;
+
+import com.vsoftcorp.usermgmt.model.User;
+import com.vsoftcorp.usermgmt.req.ChangePwdReq;
+import com.vsoftcorp.usermgmt.req.EnrollUserReq;
+import com.vsoftcorp.usermgmt.req.LoginReq;
+import com.vsoftcorp.usermgmt.req.OTPReq;
+import com.vsoftcorp.usermgmt.res.ChPwdFailureRes;
+import com.vsoftcorp.usermgmt.res.LoginRes;
+
+
+
+public interface UserService {
+
+	public String generateOTP(Long instId, Long userId, OTPReq otpReq);
+
+	public Boolean verifyOTP(Long instId, Long userId, OTPReq otpReq);
+	
+	public LoginRes login(Long instId, LoginReq loginReq);
+	
+	public void enrollUser(Long instId, Long userId, EnrollUserReq enrollUserReq);
+	
+	public ChPwdFailureRes changePassword(Long instId, Long userId, ChangePwdReq changePwdReq);
+	
+	public void logout(String loginSessionId);
+	
+	public Object[] forgotPassword(Long instId, String userName);
+
+	public String getOtpMedia(User user, String accessLinkeName);
+
+}

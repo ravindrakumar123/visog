@@ -1,0 +1,61 @@
+package com.vsoftcorp.usermgmt.dao;
+
+import java.util.List;
+
+import com.vsoftcorp.usermgmt.model.InstitutionMaster;
+import com.vsoftcorp.usermgmt.model.RolePrevilegeLinks;
+import com.vsoftcorp.usermgmt.model.Roles;
+import com.vsoftcorp.usermgmt.model.SecurityQuestions;
+import com.vsoftcorp.usermgmt.model.User;
+import com.vsoftcorp.usermgmt.model.UserSecurityQuestions;
+import com.vsoftcorp.usermgmt.model.UserXfactors;
+import com.vsoftcorp.usermgmt.req.UserSecurityQuestionsReq;
+
+public interface SecurityDao {
+
+	public Long saveSecurityQuestions(SecurityQuestions securityQuestion);
+
+	public List<SecurityQuestions> getSecurityQuestions(
+			InstitutionMaster institutionMaster);
+
+	public SecurityQuestions getSecurityQuestion(Long questionId);
+
+	public void updateSecurityQuestion(SecurityQuestions securityQuestions);
+
+	public Boolean deleteSecurityQuestion(Long questionId);
+
+	public List<UserSecurityQuestions> getUserSecurityQuestions(User userId);
+
+	public void saveUserSecurityQuestions(List<UserSecurityQuestions> questions);
+
+	public List<UserSecurityQuestions> getUserSecurityQuestions(
+			List<SecurityQuestions> userSecurityQuestionsList, User user);
+
+	public List<UserSecurityQuestions> getUserSecurityQuestionsAnswers(User user);
+
+	public void deleteUserSecurityQuestions(User user);
+
+	public void updateUserSecurityQuestions(
+			UserSecurityQuestionsReq userSecurityQuestionsReq, Long userId,
+			Long institutionId);
+
+	public void saveRolePrevileges(RolePrevilegeLinks rolePrevilegeLinks);
+
+	public void deleteRolePrevileges(Roles role);
+
+	public void updateRolePrevileges(Long institutionId, Long roleId, List<Long> accessLinksList);
+
+	public List<RolePrevilegeLinks> getRolePrevileges(Roles role);
+	
+	public void saveUserXFactors(UserXfactors xfactors);
+
+	public Boolean isRememberedUser(User user, String xFactor);
+
+	public Boolean isUserSecurityQuestionsReset(User user);
+
+	public void saveRolePrevileges(Roles role, List<RolePrevilegeLinks> rolePrevilegeLinksList);
+	
+	public void deleteRolesPrevileges(List<Roles> roles, List<RolePrevilegeLinks> rolePrevilegeLinksList);
+	
+
+}

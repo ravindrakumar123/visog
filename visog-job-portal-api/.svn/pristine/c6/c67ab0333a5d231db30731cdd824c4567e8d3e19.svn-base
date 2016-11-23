@@ -1,0 +1,8 @@
+USER_ONBOARDING_MSG = Dear {0}:  Thank you for enrolling in Corporate America\u2019s SSO Portal!\u00A0   Your temporary password:\u00A0            {1}  Please use this to sign into your account at https://sso.corpam.org.  You will then be asked to change your password.  Once again, thank you for allowing CACU the opportunity to serve you!
+
+OTP_MSG = Your one-time passcode (OTP) for your login is:                {0}  We will never call you to verify your OTP.
+
+FORGOT_PWD_MSG = Dear {0}:  Your password has been reset.  Your temporary password is:            {1}  You will be required to change this password upon login.  If you did not authorize or initiate a password reset, please contact Corporate America immediately at 1-800-292-6242.
+
+RESET_PWD_MSG = Dear {0}:  Your password has been reset.  Your temporary password is:            {1}  You will be required to change this password upon login.  If you did not authorize or initiate a password reset, please contact Corporate America immediately at 1-800-292-6242.
+

@@ -1,0 +1,144 @@
+package com.vsoftcorp.usermgmt.daoimpl;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.inject.Singleton;
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+import javax.transaction.Transactional;
+
+import org.apache.log4j.Logger;
+
+import com.vsoftcorp.usermgmt.dao.SuperAdminDao;
+import com.vsoftcorp.usermgmt.model.InstituteParams;
+import com.vsoftcorp.usermgmt.model.InstitutionMaster;
+
+@Singleton
+@Transactional
+public class SuperAdminDaoImpl implements SuperAdminDao {
+
+	@PersistenceContext(unitName = "VsoftUserManagement")
+	private EntityManager em;
+
+	private static final Logger logger = Logger.getLogger(SuperAdminDaoImpl.class);
+
+	/**
+	 * This method save the institution and returns institution Id
+	 */
+	public Long saveInstitute(InstitutionMaster institutionMaster) {
+		em.persist(institutionMaster);
+		return institutionMaster.getInstId();
+	}
+	
+	/**
+	 *This method updates the institution  
+	 */
+	public void updateInstitute(InstitutionMaster institutionMaster) {
+		em.merge(institutionMaster);
+	}
+
+	/**
+	 * This method deletes the institution for the given institution id
+	 */
+	public Boolean deleteInstitute(Long instId) {
+		Query query = em
+				.createQuery("DELETE FROM InstitutionMaster WHERE instId = :instId");
+
+		query.setParameter("instId", instId);
+
+		int deletionCount = query.executeUpdate();
+		return (deletionCount != 0);
+	}
+
+	/**
+	 * This method returns the institution and returns institution id
+	 */
+	public InstitutionMaster getInstitute(Long instId) {
+		return em.find(InstitutionMaster.class, instId);
+	}
+
+	/**
+	 * This method returns all the institutions
+	 */
+	public List<InstitutionMaster> getInstitutes() {
+		CriteriaBuilder cb = em.getCriteriaBuilder();
+		CriteriaQuery<InstitutionMaster> e = cb
+				.createQuery(InstitutionMaster.class);
+		Root<InstitutionMaster> ee = (Root<InstitutionMaster>) e
+				.from(InstitutionMaster.class);
+		e.select(ee);
+
+		return em.createQuery(e).getResultList();
+	}
+
+	/**
+	 * This method saves/updates the Institution Params
+	 */
+	public void saveOrUpdateInstituteParams(InstitutionMaster institutionId,
+			List<InstituteParams> instituteParamsList) {
+		
+		Query query = em
+				.createQuery("DELETE FROM InstituteParams WHERE instId = :instId");
+
+		query.setParameter("instId", institutionId);
+
+		query.executeUpdate();
+
+		for (InstituteParams instituteParams : instituteParamsList) {
+			
+			em.persist(instituteParams);
+
+		}
+		
+	}
+
+	/**
+	 * This method returns the institute params for the given institute
+	 */
+	public List<InstituteParams> getInstituteParams(InstitutionMaster institutionMaster) {
+		CriteriaBuilder qb = em.getCriteriaBuilder();
+		CriteriaQuery<InstituteParams> cq = qb.createQuery(InstituteParams.class);
+		Root<InstituteParams> root = cq.from(InstituteParams.class);
+
+		cq.select(root);
+
+	    cq.where(qb.equal(root.get("instId"), institutionMaster));
+
+		return em.createQuery(cq).getResultList();
+	}
+
+	/**
+	 * This method returns the institute params for the given institute
+	 */
+	public InstituteParams getInstituteParams(InstitutionMaster institutionMaster, String paramName) {
+		
+		try {
+			CriteriaBuilder qb = em.getCriteriaBuilder();
+			CriteriaQuery<InstituteParams> cq = qb.createQuery(InstituteParams.class);
+			Root<InstituteParams> root = cq.from(InstituteParams.class);
+
+			cq.select(root);
+
+			List<Predicate> predicates = new ArrayList<Predicate>();
+
+	        predicates.add(qb.equal(root.get("instId"), institutionMaster));
+	        predicates.add(qb.equal(root.get("paramName"), paramName));
+		        
+		    cq.where(predicates.toArray(new Predicate[]{}));
+			
+			return em.createQuery(cq).getSingleResult();
+		} catch (NoResultException nre) {
+			return null;
+		}
+	}
+	
+	
+	
+}

@@ -1,0 +1,34 @@
+package com.vsoftcorp.usermgmt.utils;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+
+import org.apache.log4j.Logger;
+
+public class DateUtils {
+	
+	private static final Logger logger = Logger.getLogger(DateUtils.class);
+	
+	static Date createOnEndDate = null;
+	static Date endDate = null;
+	
+	public static Date getEndDate(String toDate) {
+		
+		SimpleDateFormat sdfOut = new SimpleDateFormat("dd/MM/yyyy");
+		
+	try {
+		createOnEndDate = sdfOut.parse(toDate);
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(createOnEndDate);
+		cal.add(Calendar.DATE, 1);
+		cal.add(Calendar.MILLISECOND, -1);
+		endDate = cal.getTime();
+		
+	}  catch (ParseException e) {
+		logger.error("Exception occured while parsing");
+	}
+	return endDate;
+	}
+}

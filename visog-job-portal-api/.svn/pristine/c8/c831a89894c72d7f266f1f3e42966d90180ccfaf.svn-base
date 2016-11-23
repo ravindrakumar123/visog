@@ -1,0 +1,246 @@
+package com.vsoftcorp.usermgmt.serviceimpl;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+import org.apache.log4j.Logger;
+
+import com.vsoftcorp.usermgmt.constants.AppConstants;
+import com.vsoftcorp.usermgmt.dao.RoleDao;
+import com.vsoftcorp.usermgmt.model.AccessLinks;
+import com.vsoftcorp.usermgmt.model.InstitutionMaster;
+import com.vsoftcorp.usermgmt.model.Roles;
+import com.vsoftcorp.usermgmt.req.AccessLinksReq;
+import com.vsoftcorp.usermgmt.req.RolesReq;
+import com.vsoftcorp.usermgmt.res.AccessLinksResponse;
+import com.vsoftcorp.usermgmt.res.RolesResponse;
+import com.vsoftcorp.usermgmt.service.RoleService;
+
+@Singleton
+public class RoleServiceImpl implements RoleService {
+
+	private static final Logger logger = Logger.getLogger(RoleServiceImpl.class);
+
+	@Inject
+	RoleDao dao;
+
+	/**
+	 * This method save roles by using institutionId and rolesReq
+	 */
+	public Long saveRoles(Long institutionId, RolesReq rolesReq) {
+
+		Roles roles = new Roles();
+
+		roles.setRoleName(rolesReq.getName());
+		roles.setDescription(rolesReq.getDescription());
+		roles.setMultipleLogin(rolesReq.getMultipleLogin() ? AppConstants.TRUE_CHAR
+				: AppConstants.FALSE_CHAR);
+
+		InstitutionMaster institutionMaster = new InstitutionMaster();
+		institutionMaster.setInstId(institutionId);
+		roles.setInstId(institutionMaster);
+
+		return dao.saveRoles(roles);
+
+	}
+	
+	/**
+	 * This method returns the roles by using institutionId 
+	 */
+	public List<RolesResponse> getRoles(Long institutionId) {
+
+		InstitutionMaster institutionMaster = new InstitutionMaster();
+		institutionMaster.setInstId(institutionId);
+
+		List<Roles> roles = dao.getRoles(institutionMaster);
+
+		List<RolesResponse> RolesResponseList = new ArrayList<>();
+
+		RolesResponse rolesResponse = null;
+
+		for (Roles role : roles) {
+			rolesResponse = new RolesResponse();
+
+			rolesResponse.setId(role.getRoleId());
+			rolesResponse.setName(role.getRoleName());
+			rolesResponse.setDescription(role.getDescription());
+			rolesResponse.setUserType(role.getUserType());
+			rolesResponse.setMultipleLogin(AppConstants.TRUE_CHAR.equals(role.getMultipleLogin()));
+			RolesResponseList.add(rolesResponse);
+		}
+		return RolesResponseList;
+	}
+	
+	/**
+	 *  This method returns the role by using roleId
+	 */
+
+	public RolesResponse getRole(Long roleId) {
+		Roles role = dao.getRole(roleId);
+
+		RolesResponse rolesResponse = new RolesResponse();
+
+		rolesResponse.setName(role.getRoleName());
+		rolesResponse.setId(role.getRoleId());
+		rolesResponse.setUserType(role.getUserType());
+		rolesResponse.setDescription(role.getDescription());
+		rolesResponse.setMultipleLogin(AppConstants.TRUE_CHAR.equals(role.getMultipleLogin()));
+		return rolesResponse;
+	}
+
+	/**
+	 *  This method updates the role by using roleId 
+	 */
+	public void updateRole(RolesReq rolesReq, Long roleId) {
+
+		Roles role = dao.getRole(roleId);
+
+		role.setRoleName(rolesReq.getName());
+		role.setDescription(rolesReq.getDescription());
+		role.setMultipleLogin(rolesReq.getMultipleLogin() ? AppConstants.TRUE_CHAR
+				: AppConstants.FALSE_CHAR);
+		dao.updateRole(role);
+
+	}
+
+	/**
+	 * This method deletes the role by using roleId 
+	 */
+	public Boolean deleteRole(Long roleId) {
+		try {
+			return dao.deleteRole(roleId);
+		} catch(Exception e) {
+			logger.error("Exception in role deleteing", e);
+			return false;
+		}
+
+	}
+
+	/**
+	 * This method save accessLinks by using institutionId and accessLinksReq
+	 */
+	public Long saveAccessLinks(Long institutionId,
+			AccessLinksReq accessLinksReq) {
+
+		AccessLinks accessLinks = new AccessLinks();
+
+		accessLinks.setDescription(accessLinksReq.getDescription());
+		accessLinks.setDisplayName(accessLinksReq.getDisplayName());
+		accessLinks.setName(accessLinksReq.getName());
+		accessLinks.setIsOtpReq(accessLinksReq.getOtp() ? AppConstants.TRUE_CHAR: AppConstants.FALSE_CHAR);
+		accessLinks.setOtpMedia(accessLinksReq.getOtpMedia());
+		
+
+		if (accessLinksReq.getParent() != null) {
+			AccessLinks parentAccessLink = new AccessLinks();
+			parentAccessLink.setAccessLinkId(accessLinksReq.getParent());
+			accessLinks.setParentId(parentAccessLink);
+		}
+
+		InstitutionMaster institutionMaster = new InstitutionMaster();
+		institutionMaster.setInstId(institutionId);
+		accessLinks.setInstId(institutionMaster);
+
+		return dao.saveAccessLinks(accessLinks);
+
+	}
+
+	/**
+	 * This method returns the accessLinks by using institutionId 
+	 */
+	public List<AccessLinksResponse> getAccessLinks(Long institutionId) {
+
+		InstitutionMaster institutionMaster = new InstitutionMaster();
+		institutionMaster.setInstId(institutionId);
+
+		List<AccessLinks> accessLinks = dao.getAccessLinks(institutionMaster);
+
+		List<AccessLinksResponse> accessLinksResponseList = new ArrayList<>();
+
+		AccessLinksResponse accessLinksResponse = null;
+
+		for (AccessLinks accessLinksLoop : accessLinks) {
+			accessLinksResponse = new AccessLinksResponse();
+
+			accessLinksResponse.setId(accessLinksLoop.getAccessLinkId());
+			accessLinksResponse
+					.setDescription(accessLinksLoop.getDescription());
+			accessLinksResponse.setName(accessLinksLoop.getName());
+			accessLinksResponse
+					.setDisplayName(accessLinksLoop.getDisplayName());
+
+			accessLinksResponse.setOtp(AppConstants.TRUE_CHAR.equals(accessLinksLoop.getIsOtpReq()));
+			accessLinksResponse.setOtpMedia(accessLinksLoop.getOtpMedia());
+
+			if (accessLinksLoop.getParentId() != null) {
+				accessLinksResponse.setParent(accessLinksLoop.getParentId().getName());
+			}
+
+			accessLinksResponseList.add(accessLinksResponse);
+		}
+
+		return accessLinksResponseList;
+	}
+
+	/**
+	 * This method returns the accessLink by using accessLinkId 
+	 */
+	public AccessLinksResponse getAccessLink(Long accessLinkId) {
+		AccessLinks accessLinks = dao.getAccessLink(accessLinkId);
+
+		AccessLinksResponse accessLinksResponse = new AccessLinksResponse();
+		accessLinksResponse.setId(accessLinks.getAccessLinkId());
+		accessLinksResponse.setName(accessLinks.getName());
+		accessLinksResponse.setDisplayName(accessLinks.getDisplayName());
+		accessLinksResponse.setDescription(accessLinks.getDescription());
+
+		accessLinksResponse.setOtp(AppConstants.TRUE_CHAR.equals(accessLinks.getIsOtpReq()));
+		accessLinksResponse.setOtpMedia(accessLinks.getOtpMedia());
+
+		if (accessLinks.getParentId() != null) {
+			accessLinksResponse.setParent(accessLinks.getParentId()
+					.getName());
+		}
+
+		return accessLinksResponse;
+	}
+
+	/**
+	 * This method updates the accessLink by using accessLinksReq and accessLinkId 
+	 */
+	public void updateAccessLink(AccessLinksReq accessLinksReq,
+			Long accessLinkId) {
+
+		AccessLinks accessLinks = dao.getAccessLink(accessLinkId);
+
+		accessLinks.setName(accessLinksReq.getName());
+		accessLinks.setDisplayName(accessLinksReq.getDisplayName());
+		accessLinks.setDescription(accessLinksReq.getDescription());
+		accessLinks.setIsOtpReq(accessLinksReq.getOtp() ? AppConstants.TRUE_CHAR : AppConstants.FALSE_CHAR);
+		accessLinks.setOtpMedia(accessLinksReq.getOtpMedia());
+
+		if (accessLinksReq.getParent() != null) {
+			AccessLinks parentAccessLink = new AccessLinks();
+			parentAccessLink.setAccessLinkId(accessLinksReq.getParent());
+			accessLinks.setParentId(parentAccessLink);
+		} else {
+			accessLinks.setParentId(null);
+		}
+
+		dao.updateAccessLink(accessLinks);
+
+	}
+
+	/**
+	 * This method deletes the accessLink by using accessLinkId
+	 */
+	public Boolean deleteAccessLink(Long accessLinkId) {
+
+		return dao.deleteAccessLink(accessLinkId);
+	}
+
+}
+

@@ -1,0 +1,472 @@
+package com.vsoftcorp.usermgmt.serviceimpl;
+
+import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Properties;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+import org.apache.log4j.Logger;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import com.vsoftcorp.usermgmt.constants.AppConstants;
+import com.vsoftcorp.usermgmt.constants.UserStatus;
+import com.vsoftcorp.usermgmt.dao.AdminDao;
+import com.vsoftcorp.usermgmt.dao.RoleDao;
+import com.vsoftcorp.usermgmt.dao.UserDao;
+import com.vsoftcorp.usermgmt.exceptions.UserMgmtException;
+import com.vsoftcorp.usermgmt.model.InstitutionMaster;
+import com.vsoftcorp.usermgmt.model.LoginMaster;
+import com.vsoftcorp.usermgmt.model.PasswordRules;
+import com.vsoftcorp.usermgmt.model.Roles;
+import com.vsoftcorp.usermgmt.model.User;
+import com.vsoftcorp.usermgmt.req.PasswordRulesReq;
+import com.vsoftcorp.usermgmt.req.UserReq;
+import com.vsoftcorp.usermgmt.req.UserStatusReq;
+import com.vsoftcorp.usermgmt.res.AdminSingleUserResponse;
+import com.vsoftcorp.usermgmt.res.AdminUserResponse;
+import com.vsoftcorp.usermgmt.res.PasswordRulesRes;
+import com.vsoftcorp.usermgmt.rest.client.UserMgmtRestClient;
+import com.vsoftcorp.usermgmt.service.AdminService;
+import com.vsoftcorp.usermgmt.utils.PasswordSecurityUtils;
+import com.vsoftcorp.usermgmt.utils.PropertyUtil;
+import com.vsoftcorp.usermgmt.utils.RandomUtils;
+
+@Singleton
+public class AdminServiceImpl implements AdminService {
+
+	Properties props = null;
+	private static final Logger logger = Logger.getLogger(AdminServiceImpl.class);
+
+	@Inject
+	AdminDao dao;
+
+	@Inject
+	UserDao userDao;
+
+	@Inject
+	RoleDao roleDao;
+
+	/**
+	 * This method save user by using institution id and userReq
+	 */
+	public Long saveUser(Long institutionId1, UserReq userReq) {
+
+		Long institutionId = userReq.getInstitutionId();
+		InstitutionMaster institutionMaster = new InstitutionMaster();
+		institutionMaster.setInstId(institutionId);
+
+		if (userDao.getUserByUserName(institutionMaster, userReq.getEmailId()) != null) {
+			throw new UserMgmtException("This user already exists");
+		}
+
+		User user = new User();
+		user.setFirstName(userReq.getFirstName());
+		user.setMiddleName(userReq.getMiddleName());
+		user.setLastName(userReq.getLastName());
+		user.setEmailId(userReq.getEmailId());
+		user.setMobileNo(userReq.getMobileNo());
+		user.setSecondaryEmailId(userReq.getSecondaryEmailId());
+		user.setSecondaryMobileNo(userReq.getSecondaryMobileNo());
+
+		Roles roles = new Roles();
+		roles.setRoleId(userReq.getRoleId());
+		user.setRole(roles);
+
+		user.setUserName(userReq.getEmailId());
+		
+		// Generate a random password
+		String plainPassword = RandomUtils.getRandomAlphaNumericString(8);
+		
+		logger.info("plain password generated for the user is : "+userReq.getEmailId()+"  : " + plainPassword);
+		
+		// Hash the password
+		String password = PasswordSecurityUtils.hash256String(plainPassword);
+		
+		// encrypt the hashed password with AES algorithm and save it
+		password = PasswordSecurityUtils.encrypt(password);
+		
+		user.setPassword(password);
+		user.setIsTemporaryPassword(AppConstants.TRUE_CHAR);
+		user.setCreatedOn(new Date());
+		user.setStatus(UserStatus.NOT_ENROLLED);
+
+		user.setDefaultAccessLink(roleDao.getAccessLink(institutionMaster,
+				userReq.getDefaultAccessLinkId()));
+
+		user.setInstId(institutionMaster);
+
+		dao.saveUser(user);
+
+		// Alert sending logic for the User Onboarding
+		JSONObject instanceObj = new JSONObject();
+		instanceObj.put("bankId", PropertyUtil.getProperty("ALERT_BANK_ID"));
+		instanceObj.put("userId", "0");
+		instanceObj.put("alertType", "OTHER");
+		instanceObj.put("emailAddress", user.getEmailId());
+		instanceObj.put("phoneNo", user.getMobileNo());
+
+		instanceObj.put("message", MessageFormat.format(
+				PropertyUtil.getMailProperty("USER_ONBOARDING_MSG"),
+				user.getFirstName(), plainPassword));
+		instanceObj.put("smsMessage", MessageFormat.format(
+				PropertyUtil.getSMSProperty("USER_ONBOARDING_MSG"),
+				user.getFirstName(), plainPassword));
+		instanceObj.put("emailInd", "true");
+		instanceObj.put("smsInd", "true");
+		UserMgmtRestClient.sendAlert(UserMgmtRestClient.getVFXObject("AlertRq",
+				instanceObj));
+		
+		// Fetching SSO Field value
+		String res = null;
+		try {
+			res = UserMgmtRestClient.sendGetRequest(PropertyUtil.getSSOProperty("sso.url")+"field");
+		} catch (Exception e) {
+			logger.error("Error while fetching SSO Field", e);
+		}
+
+		// In Response object fetching the Field Id by comparing name key of the
+		// response
+		String idValue = null;
+		JSONObject respObj = new JSONObject(res);
+		JSONArray dataArr = respObj.getJSONArray("data");
+		for (int i = 0; i < dataArr.length(); i++) {
+			JSONObject obj = dataArr.getJSONObject(i);
+			
+			if (PropertyUtil.getSSOProperty("sso.field.emailId").equals(obj.getString("name"))) {
+				idValue = obj.getString("id");
+				break;
+			}
+
+		}
+
+		// Creating JSON Request
+		JSONObject fieldsObj = new JSONObject();
+		fieldsObj.put("id", idValue);
+		fieldsObj.put("value", user.getEmailId());
+
+		JSONArray fields = new JSONArray();
+		fields.put(fieldsObj);
+
+		JSONObject userObj = new JSONObject();
+		userObj.put("userName", user.getUserName());
+		userObj.put("fields", fields);
+
+		JSONObject vsoftUserObj = new JSONObject();
+		vsoftUserObj.put("user", userObj);
+
+		// Saving SSO User
+		UserMgmtRestClient.sendPostRequest(PropertyUtil
+				.getSSOProperty("sso.url")+"user", "application/json",
+				vsoftUserObj.toString());
+		return user.getUserId();
+	}
+
+	/**
+	 * This method updates user by using user id and userReq
+	 */
+	public void updateUser(UserReq userReq, Long userId) {
+
+		User user = dao.getUser(userId);
+
+		user.setFirstName(userReq.getFirstName());
+		user.setMiddleName(userReq.getMiddleName());
+		user.setLastName(userReq.getLastName());
+		user.setMobileNo(userReq.getMobileNo());
+		user.setEmailId(userReq.getEmailId());
+		user.setSecondaryEmailId(userReq.getSecondaryEmailId());
+		user.setSecondaryMobileNo(userReq.getSecondaryMobileNo());
+
+		Roles roles = new Roles();
+		roles.setRoleId(userReq.getRoleId());
+		user.setRole(roles);
+		user.setUpdatedOn(new Date());
+
+		// Fetching SSO Field value
+		String res = null;
+		try {
+			res = UserMgmtRestClient.sendGetRequest(PropertyUtil.getSSOProperty("sso.url") + "field");
+		} catch (Exception e) {
+			logger.error("Error while fetching SSO Field", e);
+		}
+
+		// In Response object fetching the Field Id by comparing name key of the
+		// response
+		String fieldId = null;
+		JSONObject respObj = new JSONObject(res);
+		JSONArray dataArr = respObj.getJSONArray("data");
+		for (int i = 0; i < dataArr.length(); i++) {
+			JSONObject obj = dataArr.getJSONObject(i);
+
+			if (PropertyUtil.getSSOProperty("sso.field.emailId").equals(
+					obj.getString("name"))) {
+				fieldId = obj.getString("id");
+				break;
+			}
+
+		}
+
+		// Creating JSON Request
+		JSONObject fieldsObj = new JSONObject();
+
+		fieldsObj.put("id", fieldId);
+		fieldsObj.put("value", user.getEmailId());
+
+		JSONArray fields = new JSONArray();
+		fields.put(fieldsObj);
+
+		JSONObject userObj = new JSONObject();
+		userObj.put("userName", user.getUserName());
+		userObj.put("fields", fields);
+
+		JSONObject vsoftUserObj = new JSONObject();
+		vsoftUserObj.put("user", userObj);
+	
+		// Updating SSO User with Update of SSO User_mgmt User
+		UserMgmtRestClient.sendPutRequest(PropertyUtil
+				.getSSOProperty("sso.url")+"user/"+user.getUserName(),
+				"application/json", vsoftUserObj.toString());
+		dao.updateUser(user);
+	}
+
+	/**
+	 * This method deletes user by using user id
+	 */
+	public Boolean deleteUser(Long userId) {
+		return dao.deleteUser(userId);
+	}
+
+	/**
+	 * This method returns user by using user id
+	 */
+	public AdminSingleUserResponse getUser(Long userId) {
+		User user = dao.getUser(userId);
+		logger.info("The user "+user+" for the user id : " + userId);
+		
+		AdminSingleUserResponse response = new AdminSingleUserResponse();
+		response.setFirstName(user.getFirstName());
+		response.setMiddleName(user.getMiddleName());
+		response.setLastName(user.getLastName());
+		response.setEmailId(user.getEmailId());
+		response.setMobileNo(user.getMobileNo());
+		response.setSecondaryEmailId(user.getSecondaryEmailId());
+		response.setSecondaryMobileNo(user.getSecondaryMobileNo());
+		response.setRole(user.getRole().getRoleName());
+		response.setStatus(user.getStatus());
+		response.setUserId(user.getUserId());
+		response.setUserName(user.getUserName());
+		response.setInstitutionId(user.getInstId().getInstId());
+		response.setRtNumber(user.getInstId().getRtNum());
+		
+		
+		// Get the last successful login master
+		LoginMaster lastSuccessLoginMaster 	= userDao.getUserLastLogin(user);
+		int loginFailureAttemps = 0;
+		
+		// If last successful login exists
+		if(lastSuccessLoginMaster != null) {
+			
+			response.setLastLoginDate(new SimpleDateFormat(PropertyUtil.getProperty("APP_DATETIME_FORMAT"))
+												.format(lastSuccessLoginMaster.getLastLoginDate()));
+
+			// Get the failure attempts count after the last success login 
+			loginFailureAttemps = userDao.getLoginAttempsCountAFterTheGivenDate(user, 
+										lastSuccessLoginMaster.getCreatedOn()).intValue();
+			
+		} else {// If there is no successful login exists for this yet
+			
+			// Get the login attempts count for this user
+			loginFailureAttemps = userDao.getLoginAttempsCount(user).intValue();
+			
+		}
+
+		response.setInvalidLoginCount(loginFailureAttemps);
+
+		return response;
+	}
+
+	/**
+	 * This method returns all the users
+	 */
+	public List<AdminUserResponse> getUsers(Long institutionId) {
+
+		InstitutionMaster institutionMaster = new InstitutionMaster();
+		institutionMaster.setInstId(institutionId);
+		List<User> users = dao.getUsers(institutionMaster);
+
+		AdminUserResponse response = null;
+		List<AdminUserResponse> responses = new ArrayList<>();
+
+		for (User user : users) {
+			response = new AdminUserResponse();
+			response.setFirstName(user.getFirstName());
+			response.setMiddleName(user.getMiddleName());
+			response.setLastName(user.getLastName());
+			response.setEmailId(user.getEmailId());
+			response.setMobileNo(user.getMobileNo());
+			response.setSecondaryEmailId(user.getSecondaryEmailId());
+			response.setSecondaryMobileNo(user.getSecondaryMobileNo());
+			response.setRole(user.getRole().getRoleName());
+			response.setStatus(user.getStatus());
+			response.setUserId(user.getUserId());
+			response.setUserName(user.getUserName());
+			response.setInstitutionId(user.getInstId().getInstId());
+			response.setRtNumber(user.getInstId().getRtNum());
+			responses.add(response);
+		}
+		return responses;
+	}
+
+	/**
+	 * This method saves/updates password rules by using institution id
+	 * ,rulesReq and role id return true if new rule was saved return false if
+	 * old rule was updated
+	 */
+	public Boolean saveOrUpdatePasswordRules(Long institutionId, Long roleId,
+			PasswordRulesReq rulesReq) {
+
+		InstitutionMaster institutionMaster = new InstitutionMaster();
+		institutionMaster.setInstId(institutionId);
+
+		Roles role = new Roles();
+		roleId = 1l;// Hard code it for 1 to make it role independent 
+		role.setRoleId(roleId);
+
+		PasswordRules rules = dao.getPasswordRules(role);
+
+		boolean isNew = false;
+
+		if (rules == null) {
+			rules = new PasswordRules();
+
+			rules.setInstId(institutionMaster);
+			rules.setRoleId(role);
+			isNew = true;
+
+		}
+
+		rules.setCheckLastPassword(rulesReq.getCheckLastPassword());
+		rules.setExpiryWarningAfter(rulesReq.getExpiryWarningAfter());
+		rules.setFailedLoginAttempts(rulesReq.getFailedLoginAttempts());
+		rules.setMinimumLength(rulesReq.getMinimumLength());
+		rules.setMinimumLowerCaseChars(rulesReq.getMinimumLowerCaseChars());
+		rules.setMinimumNumericChars(rulesReq.getMinimumNumericChars());
+		rules.setMinimumSpecialChars(rulesReq.getMinimumSpecialChars());
+		rules.setMinimumUpperCaseChars(rulesReq.getMinimumUpperCaseChars());
+		rules.setPasswordExpiryDays(rulesReq.getPasswordExpiryDays());
+		rules.setPasswordKeywords(rulesReq.getPasswordKeywords());
+		rules.setPasswordRuleName(rulesReq.getPasswordRuleName());
+		rules.setRestrictNameInPassword(rulesReq.getRestrictNameInPassword() ? AppConstants.TRUE_CHAR
+				: AppConstants.FALSE_CHAR);
+		rules.setRestrictPasswordKeywords(rulesReq.getRestrictNameInPassword() ? AppConstants.TRUE_CHAR
+				: AppConstants.FALSE_CHAR);
+		rules.setRestrictUseridInPassword(rulesReq
+				.getRestrictUseridInPassword() ? AppConstants.TRUE_CHAR
+				: AppConstants.FALSE_CHAR);
+
+		if (isNew) {
+			dao.savePasswordRules(rules);
+			return true;
+		} else {
+			dao.updatePasswordRules(rules);
+			return false;
+		}
+
+	}
+
+	/**
+	 * This method returns password rules by using institution id and role id
+	 */
+	public PasswordRulesRes getPasswordRules(Long institutionId, Long roleId) {
+
+		PasswordRulesRes rulesRes = new PasswordRulesRes();
+
+		Roles role = new Roles();
+		roleId = 1l;// Hard code it for 1 to make it role independent 
+		role.setRoleId(roleId);
+
+		PasswordRules rules = dao.getPasswordRules(role);
+
+		if (rules != null) {
+			rulesRes.setCheckLastPassword(rules.getCheckLastPassword());
+			rulesRes.setExpiryWarningAfter(rules.getExpiryWarningAfter());
+			rulesRes.setFailedLoginAttempts(rules.getFailedLoginAttempts());
+			rulesRes.setMinimumLength(rules.getMinimumLength());
+			rulesRes.setMinimumLowerCaseChars(rules.getMinimumLowerCaseChars());
+			rulesRes.setMinimumNumericChars(rules.getMinimumNumericChars());
+			rulesRes.setMinimumSpecialChars(rules.getMinimumSpecialChars());
+			rulesRes.setMinimumUpperCaseChars(rules.getMinimumUpperCaseChars());
+			rulesRes.setPasswordExpiryDays(rules.getPasswordExpiryDays());
+			rulesRes.setPasswordKeywords(rules.getPasswordKeywords());
+			rulesRes.setPasswordRuleName(rules.getPasswordRuleName());
+			rulesRes.setRestrictNameInPassword(AppConstants.TRUE_CHAR
+					.equals(rules.getRestrictNameInPassword()));
+			rulesRes.setRestrictPasswordKeywords(AppConstants.TRUE_CHAR
+					.equals(rules.getRestrictNameInPassword()));
+			rulesRes.setRestrictUseridInPassword(AppConstants.TRUE_CHAR
+					.equals(rules.getRestrictUseridInPassword()));
+			return rulesRes;
+		}
+		return null;
+
+	}
+
+	/**
+	 * This method updates user status by using user id and statusReq
+	 */
+	public void updateUserStatus(Long institutionId, Long userId,
+			UserStatusReq statusReq) {
+
+		User user = dao.getUser(userId);
+
+		user.setStatus(statusReq.getStatus());
+		user.setUpdatedOn(new Date());
+
+		dao.updateUser(user);
+
+		InstitutionMaster institutionMaster = new InstitutionMaster();
+		institutionMaster.setInstId(institutionId);
+
+		Date curDate = new Date();
+
+		if (UserStatus.VERIFIED.equals(statusReq.getStatus())) {
+			LoginMaster loginMaster = new LoginMaster();
+			loginMaster.setInstId(institutionMaster);
+			loginMaster.setUserId(user);
+			loginMaster.setCreatedOn(curDate);
+			loginMaster.setSuccessInd(AppConstants.TRUE_CHAR);
+			loginMaster.setLastLoginDate(curDate);
+			userDao.saveLoginMaster(loginMaster);
+		}
+
+	}
+
+	/**
+	 * This method updates password by using user id
+	 */
+	public void resetPassword(Long userId) {
+		User user = dao.getUser(userId);
+		
+		// Generate a random password
+		String password = RandomUtils.getRandomAlphaNumericString(8);
+		
+		logger.info("plain reset password generated for the user is : "+user.getEmailId()+"  : " + password);
+
+		// Hash the password
+		password = PasswordSecurityUtils.hash256String(password);
+		
+		// encrypt the hashed password with AES algorithm and save it
+		password = PasswordSecurityUtils.encrypt(password);
+		
+		user.setPassword(password);
+		user.setIsTemporaryPassword(AppConstants.TRUE_CHAR);
+		user.setUpdatedOn(new Date());
+		dao.updateUser(user);
+	}
+
+}

@@ -1,0 +1,15 @@
+package com.vsoftcorp.usermgmt.res;
+
+public class UserSecurityQuestionsVerifyRes {
+	
+	private String xFactor;
+
+	public String getxFactor() {
+		return xFactor;
+	}
+
+	public void setxFactor(String xFactor) {
+		this.xFactor = xFactor;
+	}
+
+}

@@ -1,0 +1,34 @@
+package com.vsoftcorp.usermgmt.req;
+
+public class RolesReq {
+
+	private String name;
+	private String description;
+	private Boolean multipleLogin;
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public Boolean getMultipleLogin() {
+		return multipleLogin;
+	}
+
+	public void setMultipleLogin(Boolean multipleLogin) {
+		this.multipleLogin = multipleLogin;
+	}
+
+	
+}

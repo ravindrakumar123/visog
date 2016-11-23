@@ -1,0 +1,776 @@
+package com.vsoftcorp.usermgmt.serviceimpl;
+
+import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import javax.annotation.Resource;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import javax.sql.DataSource;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.log4j.Logger;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authc.IncorrectCredentialsException;
+import org.apache.shiro.authc.UnknownAccountException;
+import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.mgt.RealmSecurityManager;
+import org.apache.shiro.realm.Realm;
+import org.apache.shiro.realm.jdbc.JdbcRealm;
+import org.apache.shiro.subject.Subject;
+import org.json.JSONObject;
+
+import com.vsoftcorp.usermgmt.constants.AppConstants;
+import com.vsoftcorp.usermgmt.constants.UserStatus;
+import com.vsoftcorp.usermgmt.dao.AdminDao;
+import com.vsoftcorp.usermgmt.dao.RoleDao;
+import com.vsoftcorp.usermgmt.dao.SecurityDao;
+import com.vsoftcorp.usermgmt.dao.SuperAdminDao;
+import com.vsoftcorp.usermgmt.dao.UserDao;
+import com.vsoftcorp.usermgmt.exceptions.UserMgmtException;
+import com.vsoftcorp.usermgmt.model.AccessLinks;
+import com.vsoftcorp.usermgmt.model.InstituteParams;
+import com.vsoftcorp.usermgmt.model.InstitutionMaster;
+import com.vsoftcorp.usermgmt.model.LoginMaster;
+import com.vsoftcorp.usermgmt.model.PasswordRules;
+import com.vsoftcorp.usermgmt.model.RolePrevilegeLinks;
+import com.vsoftcorp.usermgmt.model.Roles;
+import com.vsoftcorp.usermgmt.model.SecurityQuestions;
+import com.vsoftcorp.usermgmt.model.User;
+import com.vsoftcorp.usermgmt.model.UserOTP;
+import com.vsoftcorp.usermgmt.model.UserOtpPreferences;
+import com.vsoftcorp.usermgmt.model.UserPasswords;
+import com.vsoftcorp.usermgmt.model.UserSecurityQuestions;
+import com.vsoftcorp.usermgmt.req.ChangePwdReq;
+import com.vsoftcorp.usermgmt.req.EnrollUserReq;
+import com.vsoftcorp.usermgmt.req.LoginReq;
+import com.vsoftcorp.usermgmt.req.OTPReq;
+import com.vsoftcorp.usermgmt.req.UserSecurityQuestionReq;
+import com.vsoftcorp.usermgmt.res.AccessLinksResponse;
+import com.vsoftcorp.usermgmt.res.ChPwdFailureRes;
+import com.vsoftcorp.usermgmt.res.LoginFailureRes;
+import com.vsoftcorp.usermgmt.res.LoginRes;
+import com.vsoftcorp.usermgmt.res.LoginSuccessRes;
+import com.vsoftcorp.usermgmt.rest.client.UserMgmtRestClient;
+import com.vsoftcorp.usermgmt.service.UserService;
+import com.vsoftcorp.usermgmt.utils.PasswordSecurityUtils;
+import com.vsoftcorp.usermgmt.utils.PropertyUtil;
+import com.vsoftcorp.usermgmt.utils.RandomUtils;
+
+@Singleton
+public class UserServiceImpl implements UserService {
+	
+	private static final Logger logger = Logger.getLogger(UserServiceImpl.class);
+
+	@Inject
+	UserDao dao;
+	
+	@Inject
+	SecurityDao securityDao;
+	
+	@Inject
+	AdminDao adminDao;
+	
+	@Inject
+	SuperAdminDao superAdminDao;
+	
+	@Inject
+	RoleDao roleDao;
+
+	@Resource
+	DataSource dataSource;
+
+	/**
+	 *  This method generate otp by using institutionId,userId and otpReq
+	 */
+	public String generateOTP(Long instId, Long userId, OTPReq otpReq) {
+		
+		UserOTP userOTP = new UserOTP();
+		
+		User user = adminDao.getUser(userId);
+		userOTP.setUserId(user);
+		
+		// Generate random numeric string of 6 characters
+		String otp = RandomUtils.getRandomNumericString(6);
+		
+		userOTP.setValue(otp);
+		
+		userOTP.setStatus(AppConstants.OTP_STATUS_PENDING);
+		userOTP.setActivity(otpReq.getActivity());
+		
+		InstitutionMaster institutionMaster = new InstitutionMaster();
+		institutionMaster.setInstId(instId);
+
+		userOTP.setInstId(institutionMaster);
+		userOTP.setGeneratedOn(new Date());
+		
+		Long otpId = dao.saveOTP(userOTP);
+
+		logger.info("OTP for the user "+userId+" saved id : " + otpId + "<<<OTP is "+otp);
+		
+		
+		// Alert sending logic for the User OTP
+		JSONObject instanceObj = new JSONObject();
+		instanceObj.put("bankId", PropertyUtil.getProperty("ALERT_BANK_ID"));
+		instanceObj.put("userId", "0");
+		instanceObj.put("alertType", "OTHER");
+		instanceObj.put("emailAddress", user.getEmailId());
+		instanceObj.put("phoneNo", user.getMobileNo());
+		instanceObj.put("message", MessageFormat.format(
+				PropertyUtil.getMailProperty("OTP_MSG"), otp));
+		instanceObj.put("smsMessage", MessageFormat.format(
+				PropertyUtil.getSMSProperty("OTP_MSG"), otp));
+		instanceObj.put("emailInd", "true");
+		instanceObj.put("smsInd", "true");
+		UserMgmtRestClient.sendAlert(UserMgmtRestClient.getVFXObject("AlertRq", instanceObj));
+		
+		return otp;
+		
+	}
+
+	/**
+	 * This method verifies otp by using institutionId,userId and otpReq
+	 */
+	public Boolean verifyOTP(Long instId, Long userId, OTPReq otpReq) {
+		
+		otpReq.setInstId(instId);
+		otpReq.setUserId(userId);
+		UserOTP otp = dao.getOTPObject(otpReq);
+		
+		if(otp != null) {
+			
+			if(	otp.getValue().equals(otpReq.getOtp()) && 
+				AppConstants.OTP_STATUS_PENDING.equals(otp.getStatus())) {
+				
+				logger.info("OTP matched");
+				
+				Date generatedOn = otp.getGeneratedOn();
+				
+				long result = ((new Date().getTime() / 60000) - (generatedOn.getTime() / 60000));
+				int diff =  (int) result;
+				
+				logger.info("OTP is " + diff + " minutes old...");
+				
+				if (Integer.parseInt(PropertyUtil.getProperty("OTP_TIMEOUT_PERIOD_IN_MINUTES")) >= diff) {
+					
+					dao.updateOTPAsVerified(otp);
+					
+					return true;
+				} else {
+					logger.info("OTP is expired...");
+					return false;// OTP expired
+				}
+			} else {
+				logger.info("OTP does not matched");
+				return false;
+			}
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * Login user service
+	 */
+	public LoginRes login(Long instId, LoginReq loginReq) {
+		
+		String userName 					= loginReq.getUserName();
+		String password 					= loginReq.getPassword();
+		InstitutionMaster institutionMaster1 = superAdminDao.getInstitute(instId);
+		
+		// SHIRO code starts
+		Subject currentUser = SecurityUtils.getSubject();
+		Collection<Realm> realmobjecs = ((RealmSecurityManager) SecurityUtils.getSecurityManager())
+																					.getRealms();
+		
+		JdbcRealm jdbcRealm = null;
+		for(Realm realmobj : realmobjecs) {
+			if(realmobj instanceof JdbcRealm) {
+				jdbcRealm = (JdbcRealm) realmobj;
+			}
+		}
+		
+		jdbcRealm.setDataSource(dataSource);
+		
+		// Set Login Authentication query
+		jdbcRealm.setAuthenticationQuery(PropertyUtil.getProperty("SHIRO_AUTH_QUERY"));
+		
+		boolean isPwdWrong = false;
+		
+		// encrypt the hashed password with AES algorithm and compare it
+		password = PasswordSecurityUtils.encrypt(password);
+
+		try {
+			currentUser.login(new  UsernamePasswordToken(userName, password));
+		} catch ( UnknownAccountException uae ) {
+			logger.error("No user exists : " + userName);
+			throw new UserMgmtException("Invalid credentials");
+		} catch ( IncorrectCredentialsException ice ) {
+			logger.error("Wrong Password for the user : " + userName);
+			isPwdWrong = true;
+		}
+		// SHIRO code ends
+		
+		
+		// Get user
+		User user = dao.getUserByUserName(institutionMaster1, userName);
+		
+		if(user == null) {
+			logger.error("No user exists : " + userName);
+			throw new UserMgmtException("Invalid credentials");
+		}
+		
+		String status 				= user.getStatus();
+		Boolean isLocked 			= false;
+		boolean expiryPwdWarining 	= false;
+		boolean isErrorResponse 	= false;
+		int expiryPwdWariningCount 	= 0;
+		boolean isChangePwdReq 		= false;
+		Date curDate 				= new Date();
+		
+		// If user locked
+		if(UserStatus.LOCKED.equals(status)) {
+			isLocked 		= true;
+			isErrorResponse = true;
+		}
+		
+		// If Error exists
+		if(isErrorResponse) {
+			
+			LoginFailureRes failureRes = new LoginFailureRes();
+			failureRes.setFailurePwdWarining(expiryPwdWarining);
+			failureRes.setFailurePwdWariningCount(expiryPwdWariningCount);
+			failureRes.setIsLocked(isLocked);
+			return failureRes;
+			
+		}
+		
+		LoginMaster loginMaster = new LoginMaster();
+		
+		loginMaster.setInstId(user.getInstId());
+		loginMaster.setUserId(user);
+		loginMaster.setCreatedOn(curDate);
+
+		// Get the last successful login master
+		LoginMaster lastSuccessLoginMaster 	= dao.getUserLastLogin(user);
+		
+		int loginFailureAttemps = 0;
+		
+		// If last successful login exists
+		if(lastSuccessLoginMaster != null) {
+			
+			// Get the failure attempts count after the last success login 
+			loginFailureAttemps = dao.getLoginAttempsCountAFterTheGivenDate(user, 
+										lastSuccessLoginMaster.getCreatedOn()).intValue();
+			
+			logger.info("lastSuccessLoginMaster loginFailureAttemps : "+loginFailureAttemps);
+			
+		} else {// If there is no successful login exists for this yet
+			
+			// Get the login attempts count for this user
+			loginFailureAttemps = dao.getLoginAttempsCount(user).intValue();
+			
+			logger.info("Without lastSuccessLoginMaster loginFailureAttemps : "+loginFailureAttemps);
+			
+		}
+		
+		Roles role = new Roles();
+		role.setRoleId(1l);// Hard code it for 1 to make it role independent
+		// Get the password rules for this user role
+		PasswordRules passwordRules = adminDao.getPasswordRules(role);
+		
+		int toBeFailureLoginAttemps = passwordRules.getFailedLoginAttempts().intValue();
+		
+		int toBeWarningCount = passwordRules.getExpiryWarningAfter();
+		
+		int passwordExpiryDays = passwordRules.getPasswordExpiryDays().intValue();
+		
+		logger.info("Limit FailureLoginAttemps : " + toBeFailureLoginAttemps + 
+					"; Limit WarningCount : " + toBeWarningCount);
+		
+		boolean isTemporaryPwd = false;
+		
+		// If the user has the temporary password
+		if(AppConstants.TRUE_CHAR.equals(user.getIsTemporaryPassword())) {
+			isChangePwdReq = true;
+			isTemporaryPwd = true;
+		}
+
+		// If wrong password
+		if(isPwdWrong) {//!user.getPassword().equals(loginReq.getPassword())) {
+			
+			// add one entry in login master with failure status
+			loginMaster.setSuccessInd(AppConstants.FALSE_CHAR);
+			loginMaster.setEmailId(user.getEmailId());
+			dao.saveLoginMaster(loginMaster);
+			
+			if(isTemporaryPwd) {
+				logger.error("User temporary password verification failed : " + userName);
+			}
+
+			logger.info("loginFailureAttemps : " + (loginFailureAttemps + 1));
+			
+			// If the user exceeded the failure login attempts , then lock the user
+			if(toBeFailureLoginAttemps <= (loginFailureAttemps + 1)) {
+				user.setStatus(UserStatus.LOCKED);
+				user.setUpdatedOn(curDate);
+				adminDao.updateUser(user);
+				isLocked = true;
+			} else {
+				
+				// If the user not exceeded the failure count, then warn the user
+				if((loginFailureAttemps + 1) > toBeWarningCount) {
+					
+					expiryPwdWarining = true;
+					expiryPwdWariningCount = (toBeFailureLoginAttemps - loginFailureAttemps - 1);
+				}
+			}
+
+			isErrorResponse = true;
+		}
+		
+		
+		// If error exists, then return failure response
+		if(isErrorResponse) {
+			
+			LoginFailureRes failureRes = new LoginFailureRes();
+			failureRes.setFailurePwdWarining(expiryPwdWarining);
+			failureRes.setFailurePwdWariningCount(expiryPwdWariningCount);
+			failureRes.setIsLocked(isLocked);
+			return failureRes;
+			
+		}
+		
+		boolean isPasswordExpires = false;
+		long passwordExpiredInDays = 0l;
+		
+		// If the user is verified
+		if(UserStatus.VERIFIED.equals(user.getStatus())) {
+			
+			// Get the last successfully changed or created password
+			List<UserPasswords> passwords = dao.getUserLastPasswords(user, 1);
+			
+			/*
+			 *  If the last password exists, count the days from the day for 
+			 *  the password expiration calculation
+			 */
+			if(passwords.size() != 0) {
+				
+				Calendar calendar = Calendar.getInstance();
+				calendar.setTime(passwords.get(0).getCreatedOn());
+				calendar.add(Calendar.DATE, passwordExpiryDays);
+				passwordExpiredInDays = TimeUnit.DAYS.convert(calendar.getTimeInMillis() - 
+			    										curDate.getTime(), TimeUnit.MILLISECONDS) + 1;
+				
+				logger.info(calendar.getTime()+"<<<<<<<<<<<>>>>>>>>>>>>"+curDate + "<<<>>>"+passwordExpiryDays+"<<<>>>"+passwords.get(0).getCreatedOn());
+				logger.info(calendar.getTimeInMillis()+"<<<<<<<<<<<>>>>>>>>>>>>"+curDate.getTime());
+				logger.info("the days difference : " + passwordExpiredInDays);
+				/*
+				 *  If the days exists between last password created/changed date and today is 
+				 *  exceeds the password rules
+				 */
+				if(passwordExpiredInDays <= 0l) {
+				    isPasswordExpires = true;
+				    isChangePwdReq = true;
+				}
+			}
+		}
+		
+		LoginSuccessRes loginSuccessRes 			= new LoginSuccessRes();
+		List<RolePrevilegeLinks> previlegeLinks 	= securityDao.getRolePrevileges(user.getRole());
+		AccessLinks accessLinks 					= null;
+		AccessLinksResponse accessLinksRes 			= null;
+		List<AccessLinksResponse> accessLinksResps	= new ArrayList<>();
+
+		List<UserOtpPreferences> otpPreferences = adminDao.getUserOtpPrefences(user);
+		Map<Long, UserOtpPreferences> userOtpMap = new HashMap<>();
+		
+		for(UserOtpPreferences preferences : otpPreferences) {
+			userOtpMap.put(preferences.getAccessLinkId().getAccessLinkId(), preferences);
+		}
+		
+		for(RolePrevilegeLinks previlegeLink : previlegeLinks) {
+			
+			accessLinksRes 	= new AccessLinksResponse();
+			accessLinks 	= previlegeLink.getAccessLinkId();
+			
+			accessLinksRes.setId(accessLinks.getAccessLinkId());
+			accessLinksRes.setDescription(accessLinks.getDescription());
+			accessLinksRes.setDisplayName(accessLinks.getDisplayName());
+			accessLinksRes.setName(accessLinks.getName());
+			
+			if(userOtpMap.get(accessLinks.getAccessLinkId()) == null) {
+				accessLinksRes.setOtp(AppConstants.TRUE_CHAR.equals(accessLinks.getIsOtpReq()));
+				accessLinksRes.setOtpMedia(accessLinks.getOtpMedia());
+			} else {
+				accessLinksRes.setOtp(AppConstants.TRUE_CHAR.equals(userOtpMap.get(accessLinks.getAccessLinkId()).getIsOtpReq()));
+				accessLinksRes.setOtpMedia(userOtpMap.get(accessLinks.getAccessLinkId()).getOtpMedia());
+			}
+			
+			if(accessLinks.getParentId() != null) {
+				accessLinksRes.setParent(accessLinks.getParentId().getName());
+			}
+			
+			accessLinksResps.add(accessLinksRes);
+		}
+		
+		loginSuccessRes.setRole(user.getRole().getRoleId());
+		loginSuccessRes.setFirstName(user.getFirstName());
+		loginSuccessRes.setMiddleName(user.getMiddleName());
+		loginSuccessRes.setLastName(user.getLastName());
+		loginSuccessRes.setAccessLinks(accessLinksResps);
+		loginSuccessRes.setIsPasswordExpires(isPasswordExpires);
+		loginSuccessRes.setPasswordExpiredInDays(passwordExpiredInDays);
+		
+		accessLinks		= user.getDefaultAccessLink();
+		accessLinksRes 	= new AccessLinksResponse();
+		accessLinksRes.setId(accessLinks.getAccessLinkId());
+		accessLinksRes.setDescription(accessLinks.getDescription());
+		accessLinksRes.setDisplayName(accessLinks.getDisplayName());
+		accessLinksRes.setName(accessLinks.getName());
+		if(accessLinks.getParentId() != null) {
+			accessLinksRes.setParent(accessLinks.getParentId().getName());
+		}
+
+		loginSuccessRes.setDefaultPage(accessLinksRes);
+		loginSuccessRes.setEmailId(user.getEmailId());
+		loginSuccessRes.setIsFirstLogin(UserStatus.NOT_ENROLLED.equals(user.getStatus()));
+		
+		if(loginSuccessRes.getIsFirstLogin()) {
+			loginSuccessRes.setIsSecurityQuestionsReset(true);
+		} else {
+			loginSuccessRes.setIsSecurityQuestionsReset(securityDao.isUserSecurityQuestionsReset(user));
+		}
+
+		String xFactor = loginReq.getxFactor();
+		
+		if(StringUtils.isNotBlank(xFactor)) {
+			loginSuccessRes.setIsMFAReq(!securityDao.isRememberedUser(user, xFactor));
+		} else {
+			loginSuccessRes.setIsMFAReq(true);
+		}
+		
+		loginSuccessRes.setIsPwdChangeRequired(isChangePwdReq);
+		
+		if(lastSuccessLoginMaster != null) {
+			loginSuccessRes.setLastLoginDate(new SimpleDateFormat(PropertyUtil.getProperty("APP_DATETIME_FORMAT"))
+										.format(lastSuccessLoginMaster.getLastLoginDate()));
+		}
+		
+		loginSuccessRes.setMobileNo(user.getMobileNo());
+		loginSuccessRes.setSecondaryEmailId(user.getSecondaryEmailId());
+		loginSuccessRes.setSecondaryMobileNo(user.getSecondaryMobileNo());
+		loginSuccessRes.setUserId(user.getUserId());
+		loginSuccessRes.setUserName(loginReq.getUserName());
+		
+		
+		loginMaster.setSuccessInd(AppConstants.TRUE_CHAR);
+		loginMaster.setLastLoginDate(curDate);
+		loginMaster.setInOutInd(AppConstants.TRUE_CHAR);
+		loginMaster.setInOutDate(curDate);
+		loginMaster.setSessionTime(curDate);
+		loginMaster.setEmailId(user.getEmailId());
+		loginSuccessRes.setLoginSessionId(com.vsoftcorp.usermgmt.utils.SecurityUtils.encode(
+				PropertyUtil.getProperty("HS256_KEY"), dao.saveLoginMaster(loginMaster).toString()));
+		
+		InstituteParams sessionExpiryTimeParam = superAdminDao.getInstituteParams(
+				institutionMaster1, AppConstants.SESSION_EXPIRY_TIME);
+
+		InstituteParams sessionExpiryWarnParam = superAdminDao.getInstituteParams(
+				institutionMaster1, AppConstants.SESSION_EXPIRY_WARNING);
+		
+
+		Long sessionExpiryParamTimeVal = 0L;
+		Long sessionExpiryWarnParamVal = 0L;
+		if(sessionExpiryTimeParam != null) {
+			sessionExpiryParamTimeVal = Long.parseLong(sessionExpiryTimeParam.getParamValue());
+		}
+		if(sessionExpiryWarnParam != null) {
+			sessionExpiryWarnParamVal = Long.parseLong(sessionExpiryWarnParam.getParamValue());
+		}
+		loginSuccessRes.setSessionExpiryTime(sessionExpiryParamTimeVal);
+		loginSuccessRes.setSessionExpiryWarning(sessionExpiryWarnParamVal);
+		InstitutionMaster institutionMaster = user.getInstId();
+		loginSuccessRes.setInstitutionName(institutionMaster.getName());
+		loginSuccessRes.setRtNumber(institutionMaster.getRtNum());
+		loginSuccessRes.setInstitutionId(institutionMaster.getInstId());
+		
+		return loginSuccessRes;
+	}
+
+	/**
+	 * Enrolling the not enrolled user
+	 */
+	public void enrollUser(Long instId, Long userId, EnrollUserReq enrollUserReq) {
+		
+		Date currentDate 					= new Date();
+		InstitutionMaster institutionMaster = new InstitutionMaster();
+		institutionMaster.setInstId(instId);
+
+		// Update the user to enrolled status
+		User user = adminDao.getUser(userId);
+		user.setStatus(UserStatus.VERIFIED);
+		
+		// Hash the password
+		String password = PasswordSecurityUtils.hash256String(enrollUserReq.getPassword());
+		
+		// encrypt the hashed password with AES algorithm and save it
+		password = PasswordSecurityUtils.encrypt(password);
+
+		user.setPassword(password);
+		user.setIsTemporaryPassword(AppConstants.FALSE_CHAR);
+		user.setUserName(enrollUserReq.getUserName());
+		user.setUpdatedOn(currentDate);
+		
+		adminDao.updateUser(user);
+		
+		// Update the user password
+		UserPasswords passwords = new UserPasswords();
+		passwords.setCreatedOn(currentDate);
+		passwords.setInstId(institutionMaster);
+		passwords.setPassword(user.getPassword());
+		passwords.setUserId(user);
+
+		dao.updateUserPassword(passwords);
+		
+		// Set the security questions fr the user
+		List<UserSecurityQuestionReq> questionReqs 	= enrollUserReq.getSecurityQuestions();
+		UserSecurityQuestions userSecurityQuestion 	= null;
+		SecurityQuestions securityQuestions 		= null;
+		List<UserSecurityQuestions> questions		= new ArrayList<>();
+
+		for(UserSecurityQuestionReq questionReq : questionReqs) {
+			userSecurityQuestion = new UserSecurityQuestions();
+			userSecurityQuestion.setUserId(user);
+			userSecurityQuestion.setInstId(institutionMaster);
+			userSecurityQuestion.setAnswer(questionReq.getAnswer());
+
+			securityQuestions = new SecurityQuestions();
+			securityQuestions.setQuestionsId(questionReq.getId());
+			userSecurityQuestion.setQuestions(securityQuestions);
+			
+			questions.add(userSecurityQuestion);
+
+		}
+		
+		securityDao.saveUserSecurityQuestions(questions);
+		
+	}
+
+	/**
+	 * Changes the password for the given user
+	 */
+	public ChPwdFailureRes changePassword(Long instId, Long userId, ChangePwdReq changePwdReq) {
+		User user = adminDao.getUser(userId);
+		
+		Date currentDate 					= new Date();
+		InstitutionMaster institutionMaster = new InstitutionMaster();
+		institutionMaster.setInstId(instId);
+
+		boolean isCurrentPasswordMatched 	= false;
+		boolean isOldPasswordRepeated 		= false;
+		boolean isErrorResponse 			= false;
+		String curPassword					= changePwdReq.getCurrentPassword();
+		String newPassword					= changePwdReq.getNewPassword();
+		String existingPassword				= user.getPassword();
+		
+		// Hash the current password for comparison
+		curPassword = PasswordSecurityUtils.hash256String(curPassword);
+		
+		// Hash the new password for comparison
+		newPassword = PasswordSecurityUtils.hash256String(newPassword);
+		
+		// Decrypt the existing password with AES algorithm
+		existingPassword = PasswordSecurityUtils.decrypt(existingPassword);
+		
+		// If old password matches
+		if(curPassword.equals(existingPassword)) {
+			isCurrentPasswordMatched = true;
+			
+			Roles role = new Roles();
+			role.setRoleId(1l);// Hard code it for 1 to make it role independent
+
+			PasswordRules passwordRules = adminDao.getPasswordRules(role);
+			Integer checkLastPwds = passwordRules.getCheckLastPassword();
+			
+			List<UserPasswords> userPasswords = dao.getUserLastPasswords(user, checkLastPwds);
+			String userPwd = null;
+			for(UserPasswords password : userPasswords) {
+				
+				// Decrypt the user password with AES algorithm to get the hashed password
+				userPwd = PasswordSecurityUtils.decrypt(password.getPassword());
+				if(userPwd.equals(newPassword)) {
+					isOldPasswordRepeated = true;
+					isErrorResponse = true;
+					break;
+				}
+			}
+		} else {
+			isErrorResponse = true;// If old password is wrong
+		}
+		
+		// returns the error response
+		if(isErrorResponse) {
+			ChPwdFailureRes failureRes = new ChPwdFailureRes();
+			failureRes.setIsCurrentPasswordMatched(isCurrentPasswordMatched);
+			failureRes.setIsOldPasswordRepeated(isOldPasswordRepeated);
+			return failureRes;
+		}
+		
+		// Set the new password
+		UserPasswords passwords = new UserPasswords();
+		passwords.setCreatedOn(currentDate);
+		passwords.setInstId(institutionMaster);
+		
+		// encrypt the hashed password with AES algorithm and save it
+		newPassword = PasswordSecurityUtils.encrypt(newPassword);
+
+		passwords.setPassword(newPassword);
+		passwords.setUserId(user);
+
+		dao.updateUserPassword(passwords);
+		
+		// Update the user with new password
+		user.setPassword(passwords.getPassword());
+		user.setIsTemporaryPassword(AppConstants.FALSE_CHAR);
+		user.setUpdatedOn(currentDate);
+
+		adminDao.updateUser(user);
+		
+		return null;
+	}
+
+	/**
+	 * Logout the user
+	 */
+	public void logout(String loginSessionId) {
+		
+		Date curDate = new Date();
+		LoginMaster loginMaster = dao.getLoginMaster(Long.parseLong(
+									com.vsoftcorp.usermgmt.utils.SecurityUtils.decode(
+										PropertyUtil.getProperty("HS256_KEY"), loginSessionId)));
+		
+		loginMaster.setInOutDate(curDate);
+		loginMaster.setSessionTime(curDate);
+		
+		loginMaster.setInOutInd(AppConstants.FALSE_CHAR);
+		
+		dao.updateLoginMaster(loginMaster);
+		
+	}
+
+	/**
+	 * Forgot the password 
+	 */
+	public Boolean forgotPassword(Long instId, String userName) {
+		InstitutionMaster institutionMaster1 = new InstitutionMaster();
+		institutionMaster1.setInstId(instId);
+		User user  = dao.getUserByUserName(institutionMaster1, userName);
+		
+		if(user == null) {
+			return null;
+		}
+		
+		Date currentDate = new Date();
+		
+		// Get the List of OTP preferences for the given user
+		List<UserOtpPreferences> otpPreferences 	= adminDao.getUserOtpPrefences(user);
+		
+		AccessLinks overRiddenForgotPwdPreference = null; 
+		
+		// Check if the user has the permission for forgot password page
+		for(UserOtpPreferences preferences : otpPreferences) {
+			if(AppConstants.ACCESS_LINK__NAME_FORGOT_PWD.equals(
+								preferences.getAccessLinkId().getName())) {
+				
+				overRiddenForgotPwdPreference = preferences.getAccessLinkId();
+				
+				break;
+			}
+		}
+		
+		// Get the role previleges for the user role
+		List<RolePrevilegeLinks> previlegeLinks 	= securityDao.getRolePrevileges(user.getRole());
+		AccessLinks accessLinks 					= null;
+		
+		boolean hasOTP = false;
+		String otpMedia = "";
+
+		// Iterate the Role previleges to get the OTP media for the forgot password
+		for(RolePrevilegeLinks previlegeLink : previlegeLinks) {
+			
+			accessLinks 	= previlegeLink.getAccessLinkId();
+			
+			// If Forgot password found then get the OTP details
+			if(AppConstants.ACCESS_LINK__NAME_FORGOT_PWD.equals(accessLinks.getName())) {
+	
+				if(overRiddenForgotPwdPreference == null) {
+					hasOTP = AppConstants.TRUE_CHAR.equals(accessLinks.getIsOtpReq());
+					otpMedia = accessLinks.getOtpMedia();
+				} else {
+					hasOTP = AppConstants.TRUE_CHAR.equals(overRiddenForgotPwdPreference.getIsOtpReq());
+					otpMedia = overRiddenForgotPwdPreference.getOtpMedia();
+				}
+				break;
+			}
+		}
+		
+		// If OTP configured, generate and send OTP to the user 
+		if(hasOTP) {
+			
+			OTPReq otpReq = new OTPReq();
+			otpReq.setActivity(AppConstants.ACCESS_LINK__NAME_FORGOT_PWD);
+			generateOTP(instId, user.getUserId(), otpReq);
+			
+			return true;
+			
+		} else {
+			
+			// Generate a random password
+			String plainPassword = RandomUtils.getRandomAlphaNumericString(8);
+			
+			logger.info("plain forgotpassword generated for the user is : "+user.getEmailId()+"  : " + plainPassword);
+
+			// Hash the password
+			String password = PasswordSecurityUtils.hash256String(plainPassword);
+			
+			// encrypt the hashed password with AES algorithm and save it
+			password = PasswordSecurityUtils.encrypt(password);
+			
+			user.setPassword(password);
+			user.setIsTemporaryPassword(AppConstants.TRUE_CHAR);
+			user.setUpdatedOn(currentDate);
+
+			adminDao.updateUser(user);
+			
+			// Alert sending for Forgot Password if OTP not configured
+			JSONObject instanceObj = new JSONObject();
+			instanceObj.put("bankId", PropertyUtil.getProperty("ALERT_BANK_ID"));
+			instanceObj.put("userId", "0");
+			instanceObj.put("alertType", "OTHER");
+			instanceObj.put("emailAddress", user.getEmailId());
+			instanceObj.put("phoneNo", user.getMobileNo());
+			
+			instanceObj.put("message", MessageFormat.format(
+					PropertyUtil.getMailProperty("FORGOT_PWD_MSG"), 
+					user.getFirstName(), plainPassword));
+			instanceObj.put("smsMessage", MessageFormat.format(
+					PropertyUtil.getSMSProperty("FORGOT_PWD_MSG"), 
+					user.getFirstName(), plainPassword));
+			instanceObj.put("emailInd", "true");
+			instanceObj.put("smsInd", "true");
+			UserMgmtRestClient.sendAlert(UserMgmtRestClient.getVFXObject("AlertRq", instanceObj));
+			
+			return false;
+		}
+	}
+
+}

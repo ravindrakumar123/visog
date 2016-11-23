@@ -1,0 +1,140 @@
+package com.vsoftcorp.usermgmt.model;
+
+import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+
+@Entity
+@Table(name = "LOGIN_MASTER")
+public class LoginMaster {
+	
+	@Id
+	@Column(name = "LOGIN_MASTER_ID")
+	@SequenceGenerator(name = "LOGIN_MASTER_SEQ", sequenceName = "LOGIN_MASTER_SEQ", allocationSize = 1)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "LOGIN_MASTER_SEQ")
+	private Long loginMasterId;
+	
+	@ManyToOne
+	@JoinColumn(name = "INST_ID")
+	private InstitutionMaster instId;
+
+	@ManyToOne
+	@JoinColumn(name = "USER_ID")
+	private User userId;
+	
+	@Column(name = "EMAIL_ID")
+	private String emailId;
+	
+	@Column(name = "SUCCESS_IND")
+	private String successInd;
+	
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "IN_OUT_DATE")
+	private Date inOutDate;
+	
+	@Column(name = "IN_OUT_IND")
+	private String inOutInd;
+	
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "LAST_LOGIN_DATE")
+	private Date lastLoginDate;
+	
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "SESSION_TIME")
+	private Date sessionTime;
+	
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "CREATED_ON")
+	private Date createdOn;
+
+	public InstitutionMaster getInstId() {
+		return instId;
+	}
+
+	public void setInstId(InstitutionMaster instId) {
+		this.instId = instId;
+	}
+
+	public User getUserId() {
+		return userId;
+	}
+
+	public void setUserId(User userId) {
+		this.userId = userId;
+	}
+
+	public String getSuccessInd() {
+		return successInd;
+	}
+
+	public void setSuccessInd(String successInd) {
+		this.successInd = successInd;
+	}
+
+	public Date getInOutDate() {
+		return inOutDate;
+	}
+
+	public void setInOutDate(Date inOutDate) {
+		this.inOutDate = inOutDate;
+	}
+
+	public void setLastLoginDate(Date lastLoginDate) {
+		this.lastLoginDate = lastLoginDate;
+	}
+
+	public String getInOutInd() {
+		return inOutInd;
+	}
+
+	public void setInOutInd(String inOutInd) {
+		this.inOutInd = inOutInd;
+	}
+
+	public Date getLastLoginDate() {
+		return lastLoginDate;
+	}
+
+	public Long getLoginMasterId() {
+		return loginMasterId;
+	}
+
+	public void setLoginMasterId(Long loginMasterId) {
+		this.loginMasterId = loginMasterId;
+	}
+
+	public Date getCreatedOn() {
+		return createdOn;
+	}
+
+	public void setCreatedOn(Date createdOn) {
+		this.createdOn = createdOn;
+	}
+
+	public Date getSessionTime() {
+		return sessionTime;
+	}
+
+	public void setSessionTime(Date sessionTime) {
+		this.sessionTime = sessionTime;
+	}
+
+	public String getEmailId() {
+		return emailId;
+	}
+
+	public void setEmailId(String emailId) {
+		this.emailId = emailId;
+	}
+
+}

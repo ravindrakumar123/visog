@@ -1,0 +1,28 @@
+package com.vsoftcorp.usermgmt.res;
+
+public class LoginFailureRes implements LoginRes {
+
+	private Integer failurePwdWariningCount;
+	private Boolean failurePwdWarining;
+	private Boolean isLocked;
+	
+	public Boolean getIsLocked() {
+		return isLocked;
+	}
+	public void setIsLocked(Boolean isLocked) {
+		this.isLocked = isLocked;
+	}
+	public Integer getFailurePwdWariningCount() {
+		return failurePwdWariningCount;
+	}
+	public void setFailurePwdWariningCount(Integer failurePwdWariningCount) {
+		this.failurePwdWariningCount = failurePwdWariningCount;
+	}
+	public Boolean getFailurePwdWarining() {
+		return failurePwdWarining;
+	}
+	public void setFailurePwdWarining(Boolean failurePwdWarining) {
+		this.failurePwdWarining = failurePwdWarining;
+	}
+
+}

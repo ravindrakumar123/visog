@@ -1,0 +1,291 @@
+package com.vsoftcorp.usermgmt.daoimpl;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import javax.inject.Singleton;
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.PersistenceContext;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+import javax.transaction.Transactional;
+
+import com.vsoftcorp.usermgmt.constants.AppConstants;
+import com.vsoftcorp.usermgmt.dao.UserDao;
+import com.vsoftcorp.usermgmt.model.AccessLinks;
+import com.vsoftcorp.usermgmt.model.InstitutionMaster;
+import com.vsoftcorp.usermgmt.model.LoginMaster;
+import com.vsoftcorp.usermgmt.model.User;
+import com.vsoftcorp.usermgmt.model.UserOTP;
+import com.vsoftcorp.usermgmt.model.UserOtpPreferences;
+import com.vsoftcorp.usermgmt.model.UserPasswords;
+import com.vsoftcorp.usermgmt.req.OTPReq;
+
+@Singleton
+@Transactional
+public class UserDaoImpl implements UserDao {
+
+	@PersistenceContext(unitName = "VsoftUserManagement")
+	private EntityManager em;
+
+	/**
+	 * This method save the otp and returns user otp id
+	 */
+	public Long saveOTP(UserOTP userOTP) {
+		
+		em.persist(userOTP);
+		return userOTP.getUserOtpId();
+	}
+
+	/**
+	 * This method returns the otp by using otpReq
+	 */
+	public UserOTP getOTPObject(OTPReq otpReq) {
+		
+		try {
+			CriteriaBuilder qb = em.getCriteriaBuilder();
+			CriteriaQuery<UserOTP> cq = qb.createQuery(UserOTP.class);
+		    Root<UserOTP> userOtp = cq.from(UserOTP.class);			
+			
+			List<Predicate> predicates = new ArrayList<Predicate>();
+			
+			User user = new User();
+			user.setUserId(otpReq.getUserId());
+			
+			InstitutionMaster insMaster = new InstitutionMaster();
+			insMaster.setInstId(otpReq.getInstId());
+
+	        predicates.add(qb.equal(userOtp.get("userId"), user));
+	        predicates.add(qb.equal(userOtp.get("instId"), insMaster));
+	        predicates.add(qb.equal(userOtp.get("activity"), otpReq.getActivity()));
+		        
+	        cq.select(userOtp);
+
+		    cq.where(predicates.toArray(new Predicate[]{}));
+		    
+		    cq.orderBy(qb.desc(userOtp.get("generatedOn")));
+		    
+			return em.createQuery(cq).setMaxResults(1).getSingleResult();
+		} catch(NoResultException nre) {
+			return null;
+		} catch(Exception e) {
+			throw e;
+		}
+
+	}
+
+	/**
+	 * This method updates the otp as verified if the entered otp is correct
+	 */
+	public void updateOTPAsVerified(UserOTP userOTP) {
+		userOTP.setStatus(AppConstants.OTP_STATUS_VERIFIED);
+		em.merge(userOTP);
+	}
+
+	/**
+	 * Get user Data for the given user name and institute
+	 */
+	public User getUserByUserName(InstitutionMaster institutionMaster, String userName) {
+		
+		try {
+			CriteriaBuilder qb = em.getCriteriaBuilder();
+			CriteriaQuery<User> cq = qb.createQuery(User.class);
+		    Root<User> user = cq.from(User.class);			
+
+			List<Predicate> predicates = new ArrayList<Predicate>();
+
+			// Make it institution independent
+//	        predicates.add(qb.equal(user.get("instId"), institutionMaster));
+	        predicates.add(qb.equal(user.get("userName"), userName));
+		        
+		    cq.select(user);
+		    cq.where(predicates.toArray(new Predicate[]{}));
+
+			return em.createQuery(cq).getSingleResult();
+		} catch(NoResultException nre) {
+			return null;
+		} catch(Exception e) {
+			throw e;
+		}
+
+	
+	}
+	
+	/**
+	 * Save Login Master
+	 */
+	public Long saveLoginMaster(LoginMaster loginMaster) {
+		em.persist(loginMaster);
+		return loginMaster.getLoginMasterId();
+	}
+	
+	/**
+	 * Get User Last Login data for the given user
+	 */
+	public LoginMaster getUserLastLogin(User user) {
+		
+		try {
+			CriteriaBuilder qb = em.getCriteriaBuilder();
+			CriteriaQuery<LoginMaster> cq = qb.createQuery(LoginMaster.class);
+		    Root<LoginMaster> root  = cq.from(LoginMaster.class);			
+
+			List<Predicate> predicates = new ArrayList<Predicate>();
+
+	        predicates.add(qb.equal(root.get("userId"), user));
+	        predicates.add(qb.equal(root.get("successInd"), AppConstants.TRUE_CHAR));
+		        
+		    cq.select(root);
+
+		    cq.where(predicates.toArray(new Predicate[]{}));
+		    
+		    cq.orderBy(qb.desc(root.get("createdOn")));
+
+			return em.createQuery(cq).setMaxResults(1).getSingleResult();
+		} catch(NoResultException nre) {
+			return null;
+		} catch(Exception e) {
+			throw e;
+		}
+	}
+
+	/**
+	 * Get the count of login attempts after the given date
+	 */
+	public Integer getLoginAttempsCountAFterTheGivenDate(User user, Date createdOn) {
+		CriteriaBuilder qb = em.getCriteriaBuilder();
+		CriteriaQuery<Long> cq = qb.createQuery(Long.class);
+	    Root<LoginMaster> root  = cq.from(LoginMaster.class);			
+
+		List<Predicate> predicates = new ArrayList<Predicate>();
+
+        predicates.add(qb.equal(root.get("userId"), user));
+        predicates.add(qb.greaterThan(root.get("createdOn"), createdOn));
+	        
+	    cq.select(qb.count(root));
+
+	    cq.where(predicates.toArray(new Predicate[]{}));
+	    
+		return em.createQuery(cq).getSingleResult().intValue();
+	}
+
+	/**
+	 * Get Login attempts for the given user 
+	 */
+	public Integer getLoginAttempsCount(User user) {
+		CriteriaBuilder qb = em.getCriteriaBuilder();
+		CriteriaQuery<Long> cq = qb.createQuery(Long.class);
+	    Root<LoginMaster> root  = cq.from(LoginMaster.class);			
+
+	    cq.select(qb.count(root));
+
+	    cq.where(qb.equal(root.get("userId"), user));
+	    
+		return em.createQuery(cq).getSingleResult().intValue();
+	}
+
+	/**
+	 * Update User Password
+	 */
+	public void updateUserPassword(UserPasswords userPasswords) {
+		em.merge(userPasswords);
+	}
+
+	/**
+	 * Get the last used passwords for the given count
+	 */
+	public List<UserPasswords> getUserLastPasswords(User user, Integer checkLastPwds) {
+		CriteriaBuilder qb 				= em.getCriteriaBuilder();
+		CriteriaQuery<UserPasswords> cq = qb.createQuery(UserPasswords.class);
+	    Root<UserPasswords> root  		= cq.from(UserPasswords.class);			
+
+	    cq.select(root);
+
+	    cq.where(qb.equal(root.get("userId"), user));
+	    cq.orderBy(qb.desc(root.get("createdOn")));
+	    
+		return em.createQuery(cq).setMaxResults(checkLastPwds).getResultList();
+	}
+
+	/**
+	 * Get User OTP Preferences list for the given user
+	 */
+	public List<UserOtpPreferences> getUserOtpPrefences(User user) {
+		CriteriaBuilder qb = em.getCriteriaBuilder();
+		CriteriaQuery<UserOtpPreferences> cq = qb.createQuery(UserOtpPreferences.class);
+	    Root<UserOtpPreferences> root  = cq.from(UserOtpPreferences.class);			
+
+        cq.select(root);
+
+	    cq.where(qb.equal(root.get("userId"), user));
+	    
+		return em.createQuery(cq).getResultList();
+	}
+
+	/**
+	 * Get the User OTP preferences for the given user and access link
+	 */
+	public UserOtpPreferences getUserOtpPrefences(User user, AccessLinks accessLinks) {
+		
+		try {
+			CriteriaBuilder qb = em.getCriteriaBuilder();
+			CriteriaQuery<UserOtpPreferences> cq = qb.createQuery(UserOtpPreferences.class);
+		    Root<UserOtpPreferences> root  = cq.from(UserOtpPreferences.class);			
+
+		    
+			List<Predicate> predicates = new ArrayList<Predicate>();
+
+	        predicates.add(qb.equal(root.get("userId"), user));
+	        predicates.add(qb.equal(root.get("accessLinkId"), accessLinks));
+
+	        cq.select(root);
+
+		    cq.where(predicates.toArray(new Predicate[]{}));
+		    
+			return em.createQuery(cq).getSingleResult();
+		} catch(NoResultException nre) {
+			return null;
+		} catch(Exception e) {
+			throw e;
+		}
+	}
+
+	/**
+	 * Save User OTP Preferences
+	 */
+	public void saveUserOtpPrefences(UserOtpPreferences otpPreferences) {
+		em.persist(otpPreferences);
+	}
+
+	/**
+	 * Update User OTP Preferences
+	 */
+	public void updateUserOtpPrefences(UserOtpPreferences otpPreferences) {
+		em.merge(otpPreferences);
+	}
+
+	/**
+	 * Save Login Master
+	 */
+	public LoginMaster saveLoginMaster(Long loginSessionId) {
+		return em.find(LoginMaster.class, loginSessionId);
+	}
+
+	/**
+	 * Update Login Master
+	 */
+	public void updateLoginMaster(LoginMaster loginMaster) {
+		em.merge(loginMaster);
+	}
+
+	/**
+	 * Get Login Master by id
+	 */
+	public LoginMaster getLoginMaster(Long loginSessionId) {
+		return em.find(LoginMaster.class, loginSessionId);
+	}
+	
+}

@@ -1,0 +1,119 @@
+package com.vsoftcorp.usermgmt.res;
+
+public class AuditLoginResponse {
+     
+	private Long loginMasterId;
+	private Long instId;
+	private String name;
+	private String rtNum;
+	
+	private Long userId;
+	private String firstName;
+	private String middleName;
+	private String lastName;
+	private String emailId;
+
+	private Boolean successInd;
+	private String inOutDate;
+	private Boolean inOutInd;
+	private String lastLoginDate;
+	private String sessionTime;
+	private String createdOn;
+	
+	public Long getLoginMasterId() {
+		return loginMasterId;
+	}
+	public void setLoginMasterId(Long loginMasterId) {
+		this.loginMasterId = loginMasterId;
+	}
+	
+	public Long getInstId() {
+		return instId;
+	}
+	public void setInstId(Long instId) {
+		this.instId = instId;
+	}
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	public String getRtNum() {
+		return rtNum;
+	}
+	public void setRtNum(String rtNum) {
+		this.rtNum = rtNum;
+	}
+	
+	public Long getUserId() {
+		return userId;
+	}
+	public void setUserId(Long userId) {
+		this.userId = userId;
+	}
+	public String getFirstName() {
+		return firstName;
+	}
+	public void setFirstName(String firstName) {
+		this.firstName = firstName;
+	}
+	public String getMiddleName() {
+		return middleName;
+	}
+	public void setMiddleName(String middleName) {
+		this.middleName = middleName;
+	}
+	public String getLastName() {
+		return lastName;
+	}
+	public void setLastName(String lastName) {
+		this.lastName = lastName;
+	}
+	public String getEmailId() {
+		return emailId;
+	}
+	public void setEmailId(String emailId) {
+		this.emailId = emailId;
+	}
+	
+	public Boolean getSuccessInd() {
+		return successInd;
+	}
+	public void setSuccessInd(Boolean successInd) {
+		this.successInd = successInd;
+	}
+	public String getInOutDate() {
+		return inOutDate;
+	}
+	public void setInOutDate(String inOutDate) {
+		this.inOutDate = inOutDate;
+	}
+	public Boolean getInOutInd() {
+		return inOutInd;
+	}
+	public void setInOutInd(Boolean inOutInd) {
+		this.inOutInd = inOutInd;
+	}
+	public String getLastLoginDate() {
+		return lastLoginDate;
+	}
+	public void setLastLoginDate(String lastLoginDate) {
+		this.lastLoginDate = lastLoginDate;
+	}
+	public String getSessionTime() {
+		return sessionTime;
+	}
+	public void setSessionTime(String sessionTime) {
+		this.sessionTime = sessionTime;
+	}
+	public String getCreatedOn() {
+		return createdOn;
+	}
+	public void setCreatedOn(String createdOn) {
+		this.createdOn = createdOn;
+	}
+	
+	
+	
+}

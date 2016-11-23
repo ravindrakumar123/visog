@@ -1,0 +1,208 @@
+package com.vsoftcorp.usermgmt.rest.controller;
+ 
+import java.util.List;
+
+import javax.inject.Inject;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+
+import org.apache.log4j.Logger;
+
+import com.vsoftcorp.usermgmt.constants.Status;
+import com.vsoftcorp.usermgmt.req.InstParamsReq;
+import com.vsoftcorp.usermgmt.req.InstituteReq;
+import com.vsoftcorp.usermgmt.res.DataIdResponse;
+import com.vsoftcorp.usermgmt.res.VsoftResponse;
+import com.vsoftcorp.usermgmt.service.SuperAdminService;
+ 
+@Path("/v1/fi")
+public class SuperAdminController {
+	
+	private static final Logger logger = Logger.getLogger(SuperAdminController.class);
+	
+	@Inject
+	private SuperAdminService service;
+ 
+	/**
+	 * This method creates the institution 
+	 * 
+	 * @param instituteReq
+	 * @return
+	 */
+	@POST
+	@Produces("application/json")
+	@Consumes("application/json")
+	@Path("/institute")
+	public VsoftResponse createInstitution(InstituteReq instituteReq) {
+		
+		VsoftResponse response = new VsoftResponse();
+		Long instId = service.saveInstitute(instituteReq);
+		logger.info("institution id is  : "+instId);
+		
+		DataIdResponse data = new DataIdResponse();
+		data.setId(instId);
+		response.setData(data);
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Institution Created Successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+ 
+		logger.info("Institution Created Successfully : "+instId);
+
+		return response;
+	}
+	
+	/**
+	 * This method updates the institution data for the given institution id
+	 * 
+	 * @param instituteReq
+	 * @param instId
+	 * @return
+	 */
+	@PUT
+	@Produces("application/json")
+	@Consumes("application/json")
+	@Path("/institute/{id}")
+	public VsoftResponse updateInstitution(InstituteReq instituteReq,@PathParam("id") Long instId) {
+		
+		VsoftResponse response = new VsoftResponse();
+		service.updateInstitute(instituteReq, instId);
+		
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Institution Updated Successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+ 
+		logger.info("Institution Updated Successfully : "+instId);
+
+		return response;
+	}
+	
+	/**
+	 * This method deletes the institution data for the given institution id
+	 * 
+	 * @param instId
+	 * @return
+	 */
+	@DELETE
+	@Produces("application/json")
+	@Path("/institute/{id}")
+	public VsoftResponse deleteInstitution(@PathParam("id") Long instId) {
+		
+		VsoftResponse response = new VsoftResponse();
+		Boolean isDeleted = service.deleteInstitute(instId);
+		
+		if(isDeleted) {
+			response.setStatusCode(Status.STATUSCODE_SUCCESS);
+			response.setMessage("Institution Deleted Successfully");
+			response.setStatus(Status.STATUS_SUCCESS);
+	 
+			logger.info("Institution Deleted Successfully : " + instId);
+	
+		} else {
+			response.setStatusCode(Status.STATUSCODE_FAIL);
+			response.setMessage("Institution Deletion Failed");
+			response.setStatus(Status.STATUS_FAIL);
+	 
+			logger.info("Institution Deleted Failed : " + instId);
+	
+		}
+				
+		return response;
+	}
+	
+	/**
+	 * This method returns the institution for the given institution id
+	 * 
+	 * @param instId
+	 * @return
+	 */
+	@GET
+	@Produces("application/json")
+	@Path("/institute/{id}")
+	public VsoftResponse getInstitution(@PathParam("id") Long instId) {
+		
+		VsoftResponse response = new VsoftResponse();
+		response.setData(service.getInstitute(instId));
+		
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Institution data fetched Successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+ 
+		logger.info("Institution data fetched Successfully : " + instId);
+	
+				
+		return response;
+	}
+	
+	/**
+	 * This method returns all the institutions 
+	 * 
+	 * @return
+	 */
+	@GET
+	@Produces("application/json")
+	@Path("/institute")
+	public VsoftResponse getInstitutions() {
+		
+		logger.info("In get institutions data");
+		
+		VsoftResponse response = new VsoftResponse();
+		response.setData(service.getInstitutes());
+		
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Institutions data fetched Successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+ 		logger.info("Institutions data fetched Successfully : ");	
+		return response;
+	}
+
+	/**
+	 * This method saves / updates the parameters for the given institution id
+	 * @param institutionId
+	 * @param instParamsReqs
+	 * @return
+	 */
+	@POST
+	@Consumes("application/json")
+	@Produces("application/json")
+	@Path("/{id}/instituteParams")
+	public VsoftResponse saveOrUpdateInstituteParams(@PathParam("id") Long institutionId,
+										List<InstParamsReq> instParamsReqs) {
+
+		VsoftResponse response = new VsoftResponse();
+		service.saveOrUpdateInstituteParams(institutionId, instParamsReqs);
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Institute params saved successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+
+		logger.info("Institute params saved successfully");
+
+		return response;
+	}
+
+	/**
+	 * This method fetches the parameters for the given institution id
+	 * @param institutionId
+	 * @return
+	 */
+	@GET
+	@Produces("application/json")
+	@Path("/{id}/instituteParams")
+	public VsoftResponse getInstituteParams(@PathParam("id") Long institutionId) {
+		
+		VsoftResponse response = new VsoftResponse();
+		response.setData(service.getInstituteParams(institutionId));
+		
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Institute params fatched successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+ 		logger.info("Institute params fatched successfully");	
+		return response;
+	}
+
+}

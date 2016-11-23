@@ -1,0 +1,85 @@
+package com.vsoftcorp.usermgmt.servlet;
+
+import java.io.IOException;
+
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ContainerRequestFilter;
+import javax.ws.rs.container.ContainerResponseContext;
+import javax.ws.rs.container.ContainerResponseFilter;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.ext.Provider;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.log4j.Logger;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vsoftcorp.usermgmt.constants.Status;
+import com.vsoftcorp.usermgmt.exceptions.UserMgmtException;
+import com.vsoftcorp.usermgmt.res.VsoftResponse;
+import com.vsoftcorp.usermgmt.utils.PropertyUtil;
+
+/**
+ * This is the rest interceptor which executes around every API call
+ * @author sguggilla
+ *
+ */
+@Provider
+public class RestInterceptor implements ContainerRequestFilter, ContainerResponseFilter, ExceptionMapper<Throwable> {
+
+	private static final Logger logger = Logger.getLogger(RestInterceptor.class);
+
+
+	/**
+	 * This will execute before every call and it just logs the request details
+	 */
+	public void filter(ContainerRequestContext context) throws IOException {
+		
+		String json = IOUtils.toString(context.getEntityStream());
+		logger.info("Request method >>> " + context.getMethod() + 
+				"; Requset URI >>> " + context.getUriInfo().getPath() + 
+				"; Request Body >>> " + json + "\n");
+		 context.setEntityStream(IOUtils.toInputStream(json));
+	}
+
+	/**
+	 * This will execute after the call response and it just logs the response details
+	 */
+	public void filter(ContainerRequestContext reqContext,
+			ContainerResponseContext resContext) throws IOException {
+		
+		String json = new ObjectMapper().writerWithDefaultPrettyPrinter()
+														.writeValueAsString(resContext.getEntity());
+		
+		logger.info("Request method >>> " + reqContext.getMethod() + 
+					"; Requset URI >>> "+ reqContext.getUriInfo().getPath() + 
+					"; Response object >>> \n" + json + "\n");
+		
+		
+
+	}
+
+	/**
+	 * This will execute is exception occures for any request processing then it will be logged  
+	 */
+	public Response toResponse(Throwable t) {
+		VsoftResponse response = new VsoftResponse();
+		
+		if(t instanceof UserMgmtException) {
+			response.setStatusCode(Status.STATUSCODE_FAIL);
+			response.setMessage(((UserMgmtException)t).getErroMsg());
+			response.setStatus(Status.STATUS_FAIL);
+		} else {
+			response.setStatusCode(Status.STATUSCODE_ERROR);
+			response.setMessage(PropertyUtil.getProperty("UNKNOWN_ERROR_MSG"));
+			response.setStatus(Status.STATUS_ERROR);
+		}
+			
+		logger.error("Exception occured in the call", t);
+		return Response.serverError().entity(response).build();
+	}
+	
+	
+
+
+}

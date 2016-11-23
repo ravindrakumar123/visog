@@ -1,0 +1,12 @@
+DATA_SOURCE_NAME = usermgmtDB
+
+APP_DATE_FORMAT = MM-dd-yyyy
+	
+APP_DATETIME_FORMAT = MM-dd-yyyy HH:mm
+	
+OTP_TIMEOUT_PERIOD_IN_MINUTES = 15
+	
+UNKNOWN_ERROR_MSG = Unknown error occurred
+
+SHIRO_AUTH_QUERY = SELECT password FROM umgmt_users WHERE USER_NAME= ? AND INST_ID = ?
+	

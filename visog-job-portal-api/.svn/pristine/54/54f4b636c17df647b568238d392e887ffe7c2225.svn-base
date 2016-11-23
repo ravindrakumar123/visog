@@ -1,0 +1,16 @@
+package com.vsoftcorp.usermgmt.res;
+
+
+public class OTPRes {
+
+	private String otp;
+
+	public String getOtp() {
+		return otp;
+	}
+
+	public void setOtp(String otp) {
+		this.otp = otp;
+	}
+
+}

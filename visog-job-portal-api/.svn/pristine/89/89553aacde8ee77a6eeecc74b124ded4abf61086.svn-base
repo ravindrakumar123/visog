@@ -1,0 +1,523 @@
+package com.vsoftcorp.usermgmt.rest.controller;
+
+import javax.inject.Inject;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+
+import org.apache.log4j.Logger;
+
+import com.vsoftcorp.usermgmt.constants.Status;
+import com.vsoftcorp.usermgmt.req.ListRolesPrevilegesReq;
+import com.vsoftcorp.usermgmt.req.RolePrevilegesNameReq;
+import com.vsoftcorp.usermgmt.req.RolesPrevilegesReqs;
+import com.vsoftcorp.usermgmt.req.SecurityQuestionsReq;
+import com.vsoftcorp.usermgmt.req.UserSecurityQuestionsReq;
+import com.vsoftcorp.usermgmt.res.DataIdResponse;
+import com.vsoftcorp.usermgmt.res.UserSecurityQuestionsVerifyRes;
+import com.vsoftcorp.usermgmt.res.VsoftResponse;
+import com.vsoftcorp.usermgmt.service.SecurityService;
+
+@Path("/v1/fi")
+public class SecurityController {
+
+	private static final Logger logger = Logger
+			.getLogger(SecurityController.class);
+
+	@Inject
+	private SecurityService service;
+
+	/**
+	 * This method creates the security questions for the given institution
+	 * 
+	 * @param institutionId
+	 * @param securityQuestionsReq
+	 * @return
+	 */
+	@POST
+	@Consumes("application/json")
+	@Produces("application/json")
+	@Path("/{id}/securityQuestions")
+	public VsoftResponse createSecurityQuestions(
+			@PathParam("id") Long institutionId,
+			SecurityQuestionsReq securityQuestionsReq) {
+
+		VsoftResponse response = new VsoftResponse();
+		Long securityQuestionId = service.saveSecurityQuestions(
+				institutionId, securityQuestionsReq);
+
+		DataIdResponse data = new DataIdResponse();
+		data.setId(securityQuestionId);
+		response.setData(data);
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Security Question Created Successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+
+		logger.info("Security Question Created Successfully : "
+				+ securityQuestionId);
+
+		return response;
+	}
+
+	/**
+	 * This method returns the security questions for the given institution id
+	 * 
+	 * @param institutionId
+	 * @return
+	 */
+	@GET
+	@Produces("application/json")
+	@Path("/{id}/securityQuestions")
+	public VsoftResponse getSecurityQuestions(
+			@PathParam("id") Long institutionId) {
+
+		VsoftResponse response = new VsoftResponse();
+		response.setData(service.getSecurityQuestions(institutionId));
+
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Security Questions fetched Successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+
+		logger.info("Security Questions fetched Successfully : ");
+
+		return response;
+	}
+
+	/**
+	 * This method returns the security questions for the given question id
+	 * 
+	 * @param institutionId
+	 * @param questionId
+	 * @return
+	 */
+	@GET
+	@Produces("application/json")
+	@Path("/{id}/securityQuestions/{questionId}")
+	public VsoftResponse getSecurityQuestion(
+			@PathParam("id") Long institutionId,
+			@PathParam("questionId") Long questionId) {
+
+		VsoftResponse response = new VsoftResponse();
+		response.setData(service.getSecurityQuestion(questionId));
+
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Security Question fetched Successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+
+		logger.info("Security Question fetched Successfully : "
+				+ questionId);
+
+		return response;
+	}
+
+	/**
+	 * This method updates the security question for the given question id
+	 * 
+	 * @param institutionId
+	 * @param securityQuestionsReq
+	 * @param questionId
+	 * @return
+	 */
+	@PUT
+	@Consumes("application/json")
+	@Produces("application/json")
+	@Path("/{id}/securityQuestions/{questionId}")
+	public VsoftResponse updateSecurityQuestion(
+			@PathParam("id") Long institutionId,
+			SecurityQuestionsReq securityQuestionsReq,
+			@PathParam("questionId") Long questionId) {
+
+		VsoftResponse response = new VsoftResponse();
+		service.updateSecurityQuestion(securityQuestionsReq, questionId);
+
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Security Question Updated Successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+
+		logger.info("Security Question Updated Successfully ");
+
+		return response;
+	}
+
+	/**
+	 * This method deletes the security question for the given question id
+	 * 
+	 * @param institutionId
+	 * @param questionId
+	 * @return
+	 */
+	@DELETE
+	@Produces("application/json")
+	@Path("/{id}/securityQuestions/{questionId}")
+	public VsoftResponse deleteSecurityQuestion(
+			@PathParam("id") Long institutionId,
+			@PathParam("questionId") Long questionId) {
+
+		VsoftResponse response = new VsoftResponse();
+		Boolean isDeleted = service.deleteSecurityQuestion(questionId);
+
+		if (isDeleted) {
+			response.setStatusCode(Status.STATUSCODE_SUCCESS);
+			response.setMessage("Security Question Deleted Successfully");
+			response.setStatus(Status.STATUS_SUCCESS);
+
+			logger.info("Security Question Deleted Successfully : "
+					+ questionId);
+
+		} else {
+			response.setStatusCode(Status.STATUSCODE_FAIL);
+			response.setMessage("Security Question Deletion Failed");
+			response.setStatus(Status.STATUS_FAIL);
+
+			logger.info("Security Question Deletion Failed : " + questionId);
+		}
+		return response;
+	}
+
+	/**
+	 * This method returns the security questions for the given user id
+	 * 
+	 * @param institutionId
+	 * @param userId
+	 * @return
+	 */
+	@GET
+	@Produces("application/json")
+	@Path("/{id}/users/{userId}/securityQuestions")
+	public VsoftResponse getRandomSecurityQuestions(@PathParam("id") Long institutionId,
+																@PathParam("userId") Long userId) {
+
+		VsoftResponse response = new VsoftResponse();
+		response.setData(service.getRandomSecurityQuestions(userId));
+
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Random Security Questions fetched Successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+
+		logger.info("Random Security Questions fetched Successfully : ");
+
+		return response;
+	}
+
+	/**
+	 * This method save the user security questions for the given user id 
+	 * 
+	 * @param institutionId
+	 * @param userSecurityQuestionsReq
+	 * @param userId
+	 * @return
+	 */
+	@POST
+	@Consumes("application/json")
+	@Produces("application/json")
+	@Path("/{id}/users/{userId}/securityQuestions")
+	public VsoftResponse saveUserSecurityQuestions(
+			@PathParam("id") Long institutionId,
+			UserSecurityQuestionsReq userSecurityQuestionsReq,
+			@PathParam("userId") Long userId) {
+
+		VsoftResponse response = new VsoftResponse();
+		service.saveUserSecurityQuestions(institutionId,
+				userSecurityQuestionsReq, userId);
+
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Security Questions saved Successfully ");
+		response.setStatus(Status.STATUS_SUCCESS);
+		logger.info("Security Questions saved Successfully ");
+		return response;
+	}
+
+	/**
+	 * This method updates the user security questions for the given user id
+	 * 
+	 * @param institutionId
+	 * @param userId
+	 * @param userSecurityQuestionsReq
+	 * @return
+	 */
+	@PUT
+	@Consumes("application/json")
+	@Produces("application/json")
+	@Path("/{id}/users/{userId}/securityQuestions")
+	public VsoftResponse updateUserSecurityQuestions(
+			@PathParam("id") Long institutionId,
+			@PathParam("userId") Long userId,
+			UserSecurityQuestionsReq userSecurityQuestionsReq) {
+
+		VsoftResponse response = new VsoftResponse();
+		service.updateUserSecurityQuestions(userSecurityQuestionsReq,
+				userId, institutionId);
+
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Updated User Security Questions Successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+
+		logger.info("Updated User Security Questions Successfully");
+
+		return response;
+	}
+
+	/**
+	 * This method verifies the user security questions for the given user id
+	 * 
+	 * @param institutionId
+	 * @param userSecurityQuestionsReq
+	 * @param userId
+	 * @return
+	 */
+	@POST
+	@Consumes("application/json")
+	@Produces("application/json")
+	@Path("/{id}/users/{userId}/securityQuestions/verify")
+	public VsoftResponse verifyUserSecurityQuestions(
+			@PathParam("id") Long institutionId,
+			UserSecurityQuestionsReq userSecurityQuestionsReq,
+			@PathParam("userId") Long userId) {
+
+		VsoftResponse response = new VsoftResponse();
+		String isVerified = service.verifyUserSecurityQuestions(userSecurityQuestionsReq, 
+																		userId, institutionId);
+		if (isVerified != null) {
+			
+			if(!"VERIFIED".equals(isVerified)) {
+				UserSecurityQuestionsVerifyRes data = new UserSecurityQuestionsVerifyRes();
+				data.setxFactor(isVerified);
+				response.setData(data);
+			}
+			response.setStatusCode(Status.STATUSCODE_SUCCESS);
+			response.setMessage("Security Questions Validated Successfully ");
+			response.setStatus(Status.STATUS_SUCCESS);
+			logger.info("Security Questions Validated Successfully ");
+		} else {
+			response.setStatusCode(Status.STATUSCODE_FAIL);
+			response.setMessage("Entered Answers were Incorrect");
+			response.setStatus(Status.STATUS_FAIL);
+			logger.info("Entered Answers Were Incorrect ");
+		}
+
+		return response;
+	}
+
+	/**
+	 * This method reruns the user saved security questions and answers
+	 * @param institutionId
+	 * @param userId
+	 * @return
+	 */
+	@GET
+	@Produces("application/json")
+	@Path("/{id}/users/{userId}/securityQuestionsAnswers")
+	public VsoftResponse securityQuestionsAnswers(
+			@PathParam("id") Long institutionId, @PathParam("userId") Long userId) {
+
+		VsoftResponse response = new VsoftResponse();
+		response.setData(service.getUserSecurityQuestionsAnswers(userId));
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("User Security Questions and Answes fetched Successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+		logger.info("User Security Questions and Answes fetched Successfully");
+
+		return response;
+	}
+
+	/**
+	 * This method deletes the user security questions for the given user id
+	 * 
+	 * @param institutionId
+	 * @param userId
+	 * @return
+	 */
+	@DELETE
+	@Produces("application/json")
+	@Path("/{id}/users/{userId}/securityQuestions")
+	public VsoftResponse deleteUserSecurityQuestions(
+			@PathParam("id") Long institutionId,
+			@PathParam("userId") Long userId) {
+
+		VsoftResponse response = new VsoftResponse();
+		service.deleteUserSecurityQuestions(userId);
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Security Questions Deleted Successfully ");
+		response.setStatus(Status.STATUS_SUCCESS);
+		logger.info("Security Questions Deleted Successfully ");
+		return response;
+	}
+
+	/**
+	 * This method creates the role previleges for the given institution id
+	 * 
+	 * @param institutionId
+	 * @param rolePrevilegesReq
+	 * @return
+	 */
+	@POST
+	@Consumes("application/json")
+	@Produces("application/json")
+	@Path("/{id}/rolePrevileges/{roleId}")
+	public VsoftResponse createRolePrevileges(@PathParam("id") Long institutionId, 
+										@PathParam("roleId") Long roleId, ListRolesPrevilegesReq accessLinksList) {
+
+		VsoftResponse response = new VsoftResponse();
+		service.saveRolePrevileges(institutionId, roleId, accessLinksList.getAccessLinks());
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Role Previleges Created Successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+
+		logger.info("Role Previleges Created Successfully ");
+
+		return response;
+	}
+
+	/**
+	 * This method deletes the role previleges for the given role id
+	 * 
+	 * @param institutionId
+	 * @param roleId
+	 * @return
+	 */
+	@DELETE
+	@Produces("application/json")
+	@Path("/{id}/rolePrevileges/{roleId}")
+	public VsoftResponse deleteRolePrevileges(@PathParam("id") Long institutionId, 
+											@PathParam("roleId") Long roleId) {
+
+		VsoftResponse response = new VsoftResponse();
+		service.deleteRolePrevileges(roleId);
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Role Previleges Deleted Successfully ");
+		response.setStatus(Status.STATUS_SUCCESS);
+		logger.info("Role Previleges Deleted Successfully ");
+		return response;
+	}
+
+	/**
+	 * This method updates the role previleges for the given institution id
+	 * 
+	 * @param institutionId
+	 * @param rolePrevilegesReq
+	 * @return
+	 */
+	@PUT
+	@Consumes("application/json")
+	@Produces("application/json")
+	@Path("/{id}/rolePrevileges/{roleId}")
+	public VsoftResponse updateRolePrevileges(@PathParam("id") Long institutionId,
+								@PathParam("roleId") Long roleId, ListRolesPrevilegesReq accessLinksList) {
+
+		VsoftResponse response = new VsoftResponse();
+		service.updateRolePrevileges(institutionId, roleId, accessLinksList.getAccessLinks());
+
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Role Previleges Updated Successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+
+		logger.info("Role Previleges Updated Successfully");
+
+		return response;
+	}
+
+	/**
+	 * This method returns the role previleges for the given role id
+	 * 
+	 * @param institutionId
+	 * @param roleId
+	 * @return
+	 */
+	@GET
+	@Produces("application/json")
+	@Path("/{id}/rolePrevileges/{roleId}")
+	public VsoftResponse getRolePrevileges(@PathParam("id") Long institutionId,
+			@PathParam("roleId") Long roleId) {
+
+		VsoftResponse response = new VsoftResponse();
+		response.setData(service.getRolePrevileges(roleId));
+
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Role Previleges data fetched Successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+
+		logger.info("Role Previleges data fetched Successfully ");
+
+		return response;
+	}
+	
+	/**
+	 * This method creates the role previleges for the given institution id
+	 * 
+	 * @param institutionId
+	 * @param rolePrevilegesReq
+	 * @return
+	 */
+	@POST
+	@Consumes("application/json")
+	@Produces("application/json")
+	@Path("/{id}/rolePrevileges")
+	public VsoftResponse createRolePrevileges(@PathParam("id") Long institutionId, 
+										RolePrevilegesNameReq rolePrevilegesReq) {
+
+		VsoftResponse response = new VsoftResponse();
+		service.saveRolePrevileges(institutionId, rolePrevilegesReq);
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("User Role Created with previleges successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+
+		logger.info("User Role Created with previleges successfully");
+
+		return response;
+	}
+
+	/**
+	 * This method returns the roles previleges for the given institution 
+	 * 
+	 * @param institutionId
+	 * @return
+	 */
+	@GET
+	@Produces("application/json")
+	@Path("/{id}/roles/previleges")
+	public VsoftResponse getRolesPrevileges(@PathParam("id") Long institutionId) {
+
+		VsoftResponse response = new VsoftResponse();
+		response.setData(service.getRolesPrevileges(institutionId));
+
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Roles fetched with previleges successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+
+		logger.info("Roles fetched with previleges successfully");
+
+		return response;
+	}
+	
+	/**
+	 * This method creates the role previleges for the given institution id
+	 * 
+	 * @param institutionId
+	 * @param rolePrevilegesReq
+	 * @return
+	 */
+	@PUT
+	@Consumes("application/json")
+	@Produces("application/json")
+	@Path("/{id}/roles/previleges")
+	public VsoftResponse updateRolesPrevileges(@PathParam("id") Long institutionId,
+					RolesPrevilegesReqs rolesPrevilegesReqs) {
+
+		VsoftResponse response = new VsoftResponse();
+		service.saveRolesPrevileges(institutionId, rolesPrevilegesReqs.getPrevileges());
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Roles Updated with their previleges successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+
+		logger.info("Roles Updated with their previleges successfully");
+
+		return response;
+	}
+
+}

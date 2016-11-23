@@ -1,0 +1,124 @@
+package com.vsoftcorp.usermgmt.daoimpl;
+
+import java.util.Date;
+import java.util.List;
+
+import javax.inject.Singleton;
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
+import javax.transaction.Transactional;
+
+import org.apache.log4j.Logger;
+
+import com.vsoftcorp.usermgmt.constants.UserStatus;
+import com.vsoftcorp.usermgmt.dao.AdminDao;
+import com.vsoftcorp.usermgmt.model.InstitutionMaster;
+import com.vsoftcorp.usermgmt.model.PasswordRules;
+import com.vsoftcorp.usermgmt.model.Roles;
+import com.vsoftcorp.usermgmt.model.User;
+
+@Singleton
+@Transactional
+public class AdminDaoImpl implements AdminDao {
+
+	@PersistenceContext(unitName = "VsoftUserManagement")
+	private EntityManager em;
+
+	private static final Logger logger = Logger.getLogger(AdminDaoImpl.class);
+
+	/**
+	 * This method save the user and returns user id
+	 */
+	@Transactional
+	public void saveUser(User user) {
+		em.persist(user);
+	}
+
+	/**
+	 * This method updates the user 
+	 */
+	public void updateUser(User user) {
+		em.merge(user);
+	}
+
+	/**
+	 * This method deletes the user for the given user id
+	 */
+	public Boolean deleteUser(Long userId) {
+		User user = em.find(User.class, userId);
+		if(UserStatus.DELETED.equals(user.getStatus())) {
+			return false;
+		}
+		user.setStatus(UserStatus.DELETED);
+		user.setUpdatedOn(new Date());
+
+		em.merge(user);
+		return true;
+	}
+
+	/**
+	 * This method returns the user for the given user id
+	 */
+	public User getUser(Long userId) {
+
+		Query query = em.createQuery("SELECT u FROM User u JOIN u.role r JOIN u.instId i "
+									+ "WHERE u.userId = :userId");
+
+		query.setParameter("userId", userId);
+
+		return (User) query.getSingleResult();
+
+	}
+
+	/**
+	 * This method returns all the users 
+	 */
+	public List<User> getUsers(InstitutionMaster institutionMaster) {
+
+		Query query = em.createQuery("SELECT u FROM User u JOIN u.instId i");
+
+		return query.getResultList();
+	}
+
+	/**
+	 * This method save the password rules 
+	 */
+	public void savePasswordRules(PasswordRules rules) {
+		em.persist(rules);
+	}
+
+	/**
+	 * This method updates the password rules data for the given rules
+	 */
+	public void updatePasswordRules(PasswordRules rules) {
+		em.merge(rules);
+	}
+	
+	/**
+	 * This method returns the password rules for the given role id
+	 */
+	public PasswordRules getPasswordRules(Roles role) {
+		try {
+			CriteriaBuilder qb = em.getCriteriaBuilder();
+			CriteriaQuery<PasswordRules> cq = qb.createQuery(PasswordRules.class);
+			Root<PasswordRules> passwordRules = cq.from(PasswordRules.class);
+
+			cq.select(passwordRules);
+
+			cq.where(qb.equal(passwordRules.get("roleId"), role));
+
+			return (PasswordRules) em.createQuery(cq).getSingleResult();
+		} catch (NoResultException nre) {
+			return null;
+		} catch (Exception e) {
+			throw e;
+		}
+
+	}
+
+}

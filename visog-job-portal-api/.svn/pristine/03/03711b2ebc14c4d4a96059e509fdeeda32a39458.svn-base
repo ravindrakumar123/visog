@@ -1,0 +1,163 @@
+package com.vsoftcorp.usermgmt.rest.controller;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.inject.Inject;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.CookieParam;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.log4j.Logger;
+
+import com.vsoftcorp.usermgmt.constants.Status;
+import com.vsoftcorp.usermgmt.req.LoginReportReq;
+import com.vsoftcorp.usermgmt.res.VsoftResponse;
+import com.vsoftcorp.usermgmt.service.ReportService;
+import com.vsoftcorp.usermgmt.utils.ParamUtils;
+
+@Path("/v1/fi")
+public class ReportController {
+	private static final Logger logger = Logger.getLogger(ReportController.class);
+	
+	private @CookieParam("User-Identifier") String userIdentifier;
+	
+	@Inject
+	private ReportService service;
+
+	/**
+	 * This method fetches the Login details for all the users
+	 * 
+	 * @param instId
+	 * @return
+	 */
+	@GET
+	@Produces("application/json")
+	@Path("/{id}/reports/auditLogin")
+	public VsoftResponse getAuditLoginReport(@PathParam("id") String instStr) {
+		
+		Long instId = ParamUtils.getLongParam(instStr, userIdentifier);
+
+		VsoftResponse response = new VsoftResponse();
+		response.setData(service.getAuditLoginReport());
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Audit data fetched Successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+ 
+		logger.info("Audit data fetched Successfully ");
+	
+		return response;
+	}	
+	
+	/**
+	 * This method fetches the Success Login attempts for the given user by using userId
+	 * 
+	 * @param instId
+	 * @param userId
+	 * @return
+	 */
+	@POST
+	@Produces("application/json")
+	@Path("/{id}/reports/successLogins")
+	public VsoftResponse getSuccessLogins(@PathParam("id") String instStr, LoginReportReq loginReportReq) {
+		
+		Long instId = ParamUtils.getLongParam(instStr, userIdentifier);
+
+		VsoftResponse response = new VsoftResponse();
+		response.setData(service.getSuccessLoginAttemptsReport(loginReportReq));
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Success Logins Reports fetched Successfully ");
+		response.setStatus(Status.STATUS_SUCCESS);
+ 
+		logger.info("Success Logins Reports fetched Successfully ");
+	
+		return response;
+	}	
+	
+	/**
+	 * Get Login Failure Attempts for user
+	 * 
+	 * @param instId
+	 * @param userId
+	 * @return
+	 */
+	@POST
+	@Consumes("application/json")
+	@Produces("application/json")
+	@Path("/{id}/reports/inValidLogins/{userId}")
+	public VsoftResponse inValidUserLogins(@PathParam("id") String instStr, @PathParam("userId") String uIdStr, LoginReportReq loginReportReq) {
+		
+		Long instId = ParamUtils.getLongParam(instStr, userIdentifier);
+		Long userId = ParamUtils.getLongParam(uIdStr, userIdentifier);
+		VsoftResponse response = new VsoftResponse();
+		
+		response.setData(service.getFailureLoginAttemptsReport(userId,loginReportReq));
+		
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("User Failure  Login Attempts Fetched Successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+ 
+		logger.info("User Failure  Login Attempts Fetched Successfully");
+
+		return response;
+	}
+	
+	/**
+	 * Get Login Failure Attempts for user
+	 * 
+	 * @param instId
+	 * @param userId
+	 * @return
+	 */
+	@POST
+	@Consumes("application/json")
+	@Produces("application/json")
+	@Path("/{id}/reports/inValidLogins")
+	public VsoftResponse inValidLogins(@PathParam("id") String instStr, LoginReportReq loginReportReq) {
+				
+		Long instId = ParamUtils.getLongParam(instStr, userIdentifier);
+
+		VsoftResponse response = new VsoftResponse();
+		
+		response.setData(service.getFailureLoginAttemptsReportForAll(loginReportReq));
+		
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("User Failure Login Attempts Fetched Successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+ 
+		logger.info("User Failure Login Attempts Fetched Successfully");
+
+		return response;
+	}
+	
+	@GET
+	@Produces("application/json")
+	@Path("/writeGet")
+	public VsoftResponse writeTextFileGet() {
+				
+		VsoftResponse response = new VsoftResponse();
+		
+		List<String> list = new ArrayList<>();
+		list.add("hai");
+		list.add("hello");
+		list.add("how are you");
+
+		
+		response.setData(Base64.encodeBase64String(StringUtils.join(list, "\n").getBytes()));
+		
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("User Failure Login Attempts Fetched Successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+ 
+		logger.info("User Failure Login Attempts Fetched Successfully");
+
+		return response;
+	}
+	
+}

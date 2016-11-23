@@ -1,0 +1,16 @@
+package com.vsoftcorp.usermgmt.res;
+
+
+public class ForgotPasswordRes {
+
+	private Boolean isOtp;
+
+	public Boolean getIsOtp() {
+		return isOtp;
+	}
+
+	public void setIsOtp(Boolean isOtp) {
+		this.isOtp = isOtp;
+	}
+
+}

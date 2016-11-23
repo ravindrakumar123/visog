@@ -1,0 +1,51 @@
+package com.vsoftcorp.usermgmt.req;
+
+public class ReportReq {
+
+	private String createdOnStartDate;
+	private String createdOnEndDate;
+	private String firstName;
+	private String lastName;
+	private String mobileNo;
+	private String emailId;
+	
+	public String getCreatedOnStartDate() {
+		return createdOnStartDate;
+	}
+	public void setCreatedOnStartDate(String createdOnStartDate) {
+		this.createdOnStartDate = createdOnStartDate;
+	}
+	public String getCreatedOnEndDate() {
+		return createdOnEndDate;
+	}
+	public void setCreatedOnEndDate(String createdOnEndDate) {
+		this.createdOnEndDate = createdOnEndDate;
+	}
+	public String getFirstName() {
+		return firstName;
+	}
+	public void setFirstName(String firstName) {
+		this.firstName = firstName;
+	}
+	public String getLastName() {
+		return lastName;
+	}
+	public void setLastName(String lastName) {
+		this.lastName = lastName;
+	}
+	public String getMobileNo() {
+		return mobileNo;
+	}
+	public void setMobileNo(String mobileNo) {
+		this.mobileNo = mobileNo;
+	}
+	public String getEmailId() {
+		return emailId;
+	}
+	public void setEmailId(String emailId) {
+		this.emailId = emailId;
+	}
+	
+	
+	
+}

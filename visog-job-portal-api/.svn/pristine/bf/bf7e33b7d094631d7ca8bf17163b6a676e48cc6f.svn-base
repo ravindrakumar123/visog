@@ -1,0 +1,423 @@
+package com.vsoftcorp.usermgmt.servlet;
+
+import java.io.IOException;
+import java.util.Date;
+
+import javax.inject.Inject;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ContainerRequestFilter;
+import javax.ws.rs.container.ContainerResponseContext;
+import javax.ws.rs.container.ContainerResponseFilter;
+import javax.ws.rs.core.Cookie;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.NewCookie;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.ext.Provider;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.log4j.Logger;
+import org.json.JSONObject;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vsoftcorp.usermgmt.constants.AppConstants;
+import com.vsoftcorp.usermgmt.constants.Status;
+import com.vsoftcorp.usermgmt.dao.SecurityDao;
+import com.vsoftcorp.usermgmt.dao.SuperAdminDao;
+import com.vsoftcorp.usermgmt.dao.UserDao;
+import com.vsoftcorp.usermgmt.exceptions.UserMgmtException;
+import com.vsoftcorp.usermgmt.model.InstituteParams;
+import com.vsoftcorp.usermgmt.model.InstitutionMaster;
+import com.vsoftcorp.usermgmt.model.LoginMaster;
+import com.vsoftcorp.usermgmt.res.VsoftResponse;
+import com.vsoftcorp.usermgmt.utils.PropertyUtil;
+import com.vsoftcorp.usermgmt.utils.SecurityUtils;
+
+/**
+ * This is the rest interceptor which executes around every API call
+ * @author sguggilla
+ *
+ */
+@Provider
+public class RestInterceptor implements ContainerRequestFilter, ContainerResponseFilter, ExceptionMapper<Throwable> {
+
+	private static final Logger logger 					= Logger.getLogger(RestInterceptor.class);
+
+	private static final Boolean IS_SESSION_REQUIRED 	= "true".equals(PropertyUtil.getProperty("IS_SESSION_REQUIRED"));
+
+	private static final String USER_IDENTIFIER 		= PropertyUtil.getProperty("USER_IDENTIFIER");
+
+	private static final String HEADER_ACCESS_LINK 		= PropertyUtil.getProperty("HEADER_ACCESS_LINK");
+
+	private static final String HEADER_ACCESS_LINK_KEY 	= PropertyUtil.getProperty("HEADER_ACCESS_LINK_KEY");
+
+	@Inject
+	private UserDao userDao; 
+
+	@Inject
+	private SecurityDao securityDao; 
+
+	@Inject
+	SuperAdminDao superAdminDao;
+
+	/**
+	 * This will execute before every call and it just logs the request details
+	 */
+	public void filter(ContainerRequestContext context) throws IOException {
+		
+		// Get the Request URL
+		String url = context.getUriInfo().getPath();
+
+		// Get the Request body
+		String json = IOUtils.toString(context.getEntityStream());
+		
+		logger.info("Request method >>> " + context.getMethod() + 
+				"; Requset URI >>> " + url + "; Request Body >>> " + json + "\n");
+		
+		
+		// If session management is required
+		if(IS_SESSION_REQUIRED) {
+			
+			/*
+			 * Except before login url's, check the session validity
+			 */
+			if(		!StringUtils.endsWith(url, "/users/login") && 
+					!StringUtils.contains(url, "/users/forgotPassword/")) {
+				
+					context.setProperty("isSessionIgnorable", false);
+
+				
+					logger.info("context.getCookies()>>>>>>>>>>>"+context.getCookies());
+					Cookie cookie = context.getCookies().get(USER_IDENTIFIER);
+					
+					// Prepare the Unauthorized Response object
+					VsoftResponse response = new VsoftResponse();
+					response.setStatusCode(Status.STATUSCODE_UNATHORIZED);
+					response.setStatus(Status.STATUS_UNATHORIZED);
+					
+					// If no cookie found in request header with the name user identifier
+					if(cookie == null) {
+						response.setMessage("No cookie exists");
+						context.abortWith(Response.status(Response.Status.UNAUTHORIZED).
+								entity(response).build());
+						logger.error("No cookie exists");
+						return;
+					}
+					
+					String cookieVal = cookie.getValue();
+					
+					logger.info("cookieVal>>>>>>>>>>>>>>>>>" + cookieVal);
+					// Get the Login session id from the request header cookie
+					Long loginSesId = Long.parseLong(SecurityUtils.decode(PropertyUtil.getProperty("HS256_KEY"), 
+															cookieVal));
+					
+					logger.info("loginSesId>>>>>>>>>>>>>>>>>" + loginSesId);
+					// Get the Login Master object from the id
+					LoginMaster loginMaster = userDao.getLoginMaster(loginSesId);
+					
+					
+					if(loginMaster != null) {
+						
+						// If the user logged in
+						if(AppConstants.TRUE_CHAR.equals(loginMaster.getInOutInd())) {
+							
+							// Get the institution id from Login Master object
+							Long instId = loginMaster.getInstId().getInstId();
+							
+							logger.info("instId>>>>>"+instId);
+							
+							InstitutionMaster institutionMaster = new InstitutionMaster();
+							institutionMaster.setInstId(1l);
+							
+							// Get the session expiry time for this institution
+							InstituteParams sessionExpiryTimeParam = superAdminDao.getInstituteParams(
+									institutionMaster, AppConstants.SESSION_EXPIRY_TIME);
+							
+							Long sessionExpiryTime = Long.parseLong(sessionExpiryTimeParam.getParamValue());
+							
+							Date curDate		= new Date();
+							Long sessionTime 	= loginMaster.getSessionTime().getTime();// In milli seconds
+							Long curTime		= curDate.getTime();// In milli seconds
+							Long diff			= (curTime - sessionTime) / 1000L;// In seconds
+							
+							// If the session expired, update the login master as session expired
+							if(diff > sessionExpiryTime) {
+								loginMaster.setInOutDate(curDate);
+								loginMaster.setSessionTime(curDate);
+								loginMaster.setInOutInd(AppConstants.FALSE_CHAR);
+								
+								userDao.updateLoginMaster(loginMaster);
+								
+								response.setMessage("Session Expired");
+								context.abortWith(Response.status(Response.Status.UNAUTHORIZED).
+										entity(response).build());
+								logger.error("Session Expired");
+								
+								return;
+							}
+						} else {
+							// If already logged out
+							response.setMessage("Already logged out");
+							context.abortWith(Response.status(Response.Status.UNAUTHORIZED).
+									entity(response).build());
+							logger.error("Already logged out");
+							return;
+						}
+					} else {
+						
+						// If no session exists
+						response.setMessage("No session exists");
+						context.abortWith(Response.status(Response.Status.UNAUTHORIZED).
+												entity(response).build());
+						logger.error("No session exists");
+						return;
+					}
+					
+					
+					// Decrypt the request body if exists
+					if(StringUtils.isNotBlank(json)) {
+						
+						JSONObject reqBodyObj = new JSONObject(json);
+						
+						if(StringUtils.endsWith(url, "/otp/verify")) {
+							if(reqBodyObj.has("data")) {
+								json = SecurityUtils.decodeToJSON(cookieVal, reqBodyObj.getString("data")).toString();
+							} else {
+								context.setProperty("isSessionIgnorable", true);
+							}
+						} else {
+							json = SecurityUtils.decodeToJSON(cookieVal, reqBodyObj.getString("data")).toString();
+						}
+					}
+					
+					
+					// If the URL ends with OTP related URLs, then bypass the role permission
+					if(!StringUtils.endsWithAny(url, "/otp", "/otp/verify", "/securityQuestions", 
+							"/changePassword", "/logout")) {
+						String accessLinkHeader = context.getHeaderString(HEADER_ACCESS_LINK);
+						
+						logger.info("accessLinkHeader >>>>>>>>>" + accessLinkHeader);
+						
+						if(StringUtils.isNotBlank(accessLinkHeader)) {
+							JSONObject accessLinkObj = SecurityUtils.decodeToJSON(cookieVal, accessLinkHeader);
+							
+							logger.info("Header Object>>>>>>>" + accessLinkObj);
+							String accessLinkName = accessLinkObj.optString(HEADER_ACCESS_LINK_KEY);
+							
+							logger.info("accessLinkName >>>>>>>>>" + accessLinkName);
+							
+							if(StringUtils.isBlank(accessLinkName)) {
+								// If no key exists in header
+/*								response.setMessage("No permission to access this URL");
+								context.abortWith(Response.status(Response.Status.UNAUTHORIZED).entity(response).build());
+								logger.error("There is no key in the header : " + HEADER_ACCESS_LINK + " with the key : " + HEADER_ACCESS_LINK_KEY);
+								return;*/
+							} else {
+								boolean hasURLpemission = securityDao.hasRolePrevileges(
+													loginMaster.getUserId().getRole(), accessLinkName);
+								if(!hasURLpemission) {
+									// If no access-link exists in header
+									response.setMessage("No permission to access this URL");
+									context.abortWith(Response.status(Response.Status.UNAUTHORIZED).entity(response).build());
+									logger.error("No permission to access this URL");
+									return;
+								}
+							}
+						} else {
+							// If no access-link exists in header
+							response.setMessage("No Access link header exists");
+							context.abortWith(Response.status(Response.Status.UNAUTHORIZED).entity(response).build());
+							logger.error("No Access Link exists in the header");
+							return;
+						}
+					}
+			} else {
+				context.setProperty("isSessionIgnorable", true);
+			}
+		}
+		
+		logger.info("After decryption, the request body : " + json);
+		
+		
+		// Re-assign the request body again to the request as we have detached for logging 
+		context.setEntityStream(IOUtils.toInputStream(json));
+	}
+
+	/**
+	 * This will execute after the call response and it just logs the response details
+	 */
+	public void filter(ContainerRequestContext reqContext, ContainerResponseContext resContext) throws IOException {
+		
+		try {
+			// Get the request URL
+			String url = reqContext.getUriInfo().getPath();
+
+			// Get the Response Body
+			String json = new ObjectMapper().writeValueAsString(resContext.getEntity());
+
+			logger.info("Request method >>> " + reqContext.getMethod() + "; Requset URI >>> "+ url + 
+															"; Response object >>> \n" + json + "\n");
+			
+			// If session management is required
+			if(IS_SESSION_REQUIRED) {
+				
+				String loginSessionId = null;
+				boolean isNotErrorCase = true;
+				// If the request is unauthorized
+				if(resContext.getStatus() == Response.Status.UNAUTHORIZED.getStatusCode()) {
+					isNotErrorCase = false;
+				}
+				
+				// If the Request ends with unknown error
+				if(resContext.getStatus() == Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()) {
+					isNotErrorCase = false;
+				}
+				
+				if(isNotErrorCase) {
+					 // After login success, we are putting session id in cookies
+					if(StringUtils.endsWith(url, "/users/login")) {
+						
+						JSONObject respObj = new JSONObject(json);
+						
+						// If Login failed, add header as the response is in the plain mode
+						if(Status.STATUSCODE_FAIL.intValue() == respObj.getInt("statusCode")) {
+							resContext.getHeaders().add("isEncrypted", false);
+							return;
+						}
+						
+						// If the login is success, then the response will be in encrypted mode
+						resContext.getHeaders().add("isEncrypted", true);
+
+						
+						JSONObject data = respObj.getJSONObject("data");
+						
+						loginSessionId = data.getString("loginSessionId");
+						// If login success, then create a request header cookie
+						resContext.getHeaders().add("Set-Cookie", new NewCookie(USER_IDENTIFIER, loginSessionId) {
+
+							public int getMaxAge() {
+								return 24 * 60 * 60;
+							}
+
+							public boolean isHttpOnly() {
+								return false;
+							}
+
+							public boolean isSecure() {
+								return false;
+							}
+
+							public String getPath() {
+								return "/";
+							}
+
+							public String getDomain() {
+								return PropertyUtil.getProperty("COOKIE_DOMAIN");
+							}
+						});
+						
+					} else if (StringUtils.contains(url, "/logout/")) {
+						
+						// At the time of logout, remove the cookie
+						resContext.getCookies().remove(USER_IDENTIFIER);
+						
+					} else if (	StringUtils.contains(url, "/users/forgotPassword/")) {
+						
+						// Exclude the forgot password url as it is not contain session
+						resContext.getCookies().remove(USER_IDENTIFIER);
+						
+					} else {
+						
+						if((boolean) reqContext.getProperty("isSessionIgnorable")) {
+							resContext.getCookies().remove(USER_IDENTIFIER);
+						} else {
+							// If the user is accessing after login urls
+							
+							// get the Login session id for the request
+							Long loginSesId = Long.parseLong(SecurityUtils.decode(PropertyUtil.getProperty("HS256_KEY"), 
+									reqContext.getCookies().get(USER_IDENTIFIER).getValue()));
+							
+							// Get the Login Master Object from the id
+							LoginMaster loginMaster = userDao.getLoginMaster(loginSesId);
+							
+							if(loginMaster != null) {
+								
+								// Update the Login master for every request hit
+								loginMaster.setSessionTime(new Date());
+								
+								userDao.updateLoginMaster(loginMaster);
+								
+							} else {
+								logger.error("No session identified while updating the login session");
+							}
+						}
+					}
+				}
+				
+				// Except the before login URLs, all responses are encrypting
+				if((boolean) reqContext.getProperty("isSessionIgnorable")) {
+					resContext.getCookies().remove(USER_IDENTIFIER);
+				} else {
+					loginSessionId = reqContext.getCookies().get(USER_IDENTIFIER).getValue();
+					Object responseEntity = resContext.getEntity(); 
+					resContext.setEntity(new UserMgmtResponse(responseEntity, loginSessionId)); 
+				}
+			}
+		} catch(Exception e) {
+			logger.error("Error in response processing...........", e);
+		}
+	}
+
+	/**
+	 * This will execute is exception occurred for any request processing then it will be logged  
+	 */
+	public Response toResponse(Throwable t) {
+		VsoftResponse response = new VsoftResponse();
+		
+		UserMgmtException u = null;
+		if(t.getCause() instanceof UserMgmtException) {
+			logger.error("Cause is UserMgmtException>>>>>>>>>>>>");
+			u = (UserMgmtException) t.getCause();
+		} else if (t instanceof UserMgmtException) {
+			logger.error("Exception is UserMgmtException>>>>>>>>>>>>");
+			u = (UserMgmtException) t;
+		} else {
+			logger.error("Exception is DirectException>>>>>>>>>>>>");
+		}
+		
+		if(u != null) {
+			
+			if(u.getE() != null) {
+				
+				logger.error("UserMgmt Exception cause Exception occured in the call", u.getE());
+				
+			} else {
+				
+				logger.error("UserMgmt Exception occured in the call", u);
+				
+			}
+		} else {
+			
+			logger.error("Exception occured in the call", t);
+
+		}
+		
+		// If the user defined exception occurred
+		if(u != null) {
+			response.setStatusCode(Status.STATUSCODE_FAIL);
+			response.setMessage(u.getErroMsg());
+			response.setStatus(Status.STATUS_FAIL);
+			return Response.serverError().entity(response).build();
+		}
+		
+		// If Unknown and un-handled exception occurred
+		response.setStatusCode(Status.STATUSCODE_ERROR);
+		response.setMessage(PropertyUtil.getProperty("UNKNOWN_ERROR_MSG"));
+		response.setStatus(Status.STATUS_ERROR);
+		logger.info("In error reponse ending>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+		return Response.serverError().status(Response.Status.UNAUTHORIZED).entity(response).type(MediaType.APPLICATION_JSON).build();
+
+	}
+
+}

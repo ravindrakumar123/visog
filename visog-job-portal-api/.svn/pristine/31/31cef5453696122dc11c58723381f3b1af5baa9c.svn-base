@@ -1,0 +1,17 @@
+package com.vsoftcorp.usermgmt.req;
+
+import java.util.List;
+
+
+public class UsersReq {
+
+	private List<Long> users;
+
+	public List<Long> getUsers() {
+		return users;
+	}
+
+	public void setUsers(List<Long> users) {
+		this.users = users;
+	}
+}

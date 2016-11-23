@@ -1,0 +1,186 @@
+package com.vsoftcorp.usermgmt.res;
+
+import java.util.List;
+
+
+public class LoginSuccessRes implements LoginRes {
+
+	private Long userId;
+	private String userName;
+	private String firstName;
+	private String middleName;
+	private String lastName;
+	private String mobileNo;
+	private String emailId;
+	private String secondaryMobileNo;
+	private String secondaryEmailId;
+	private String lastLoginDate;
+	private Boolean isFirstLogin;
+	private Boolean isPwdChangeRequired;
+	private Boolean isMFAReq;
+	private AccessLinksResponse defaultPage; 
+	private Long passwordExpiredInDays;
+	private String loginSessionId;
+	private Long sessionExpiryTime;
+	private Long sessionExpiryWarning;
+	private Boolean isPasswordExpires;
+	private Boolean isSecurityQuestionsReset;
+	private List<AccessLinksResponse> accessLinks;
+	private Long role;
+	private Long institutionId;
+	private String institutionName;
+	private String rtNumber;
+	
+	public Long getUserId() {
+		return userId;
+	}
+	public void setUserId(Long userId) {
+		this.userId = userId;
+	}
+	public String getUserName() {
+		return userName;
+	}
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
+	public String getMobileNo() {
+		return mobileNo;
+	}
+	public void setMobileNo(String mobileNo) {
+		this.mobileNo = mobileNo;
+	}
+	public String getEmailId() {
+		return emailId;
+	}
+	public void setEmailId(String emailId) {
+		this.emailId = emailId;
+	}
+	public String getSecondaryMobileNo() {
+		return secondaryMobileNo;
+	}
+	public void setSecondaryMobileNo(String secondaryMobileNo) {
+		this.secondaryMobileNo = secondaryMobileNo;
+	}
+	public String getSecondaryEmailId() {
+		return secondaryEmailId;
+	}
+	public void setSecondaryEmailId(String secondaryEmailId) {
+		this.secondaryEmailId = secondaryEmailId;
+	}
+	public String getLastLoginDate() {
+		return lastLoginDate;
+	}
+	public void setLastLoginDate(String lastLoginDate) {
+		this.lastLoginDate = lastLoginDate;
+	}
+	public Boolean getIsFirstLogin() {
+		return isFirstLogin;
+	}
+	public void setIsFirstLogin(Boolean isFirstLogin) {
+		this.isFirstLogin = isFirstLogin;
+	}
+	public Boolean getIsPwdChangeRequired() {
+		return isPwdChangeRequired;
+	}
+	public void setIsPwdChangeRequired(Boolean isPwdChangeRequired) {
+		this.isPwdChangeRequired = isPwdChangeRequired;
+	}
+	public Boolean getIsMFAReq() {
+		return isMFAReq;
+	}
+	public void setIsMFAReq(Boolean isMFAReq) {
+		this.isMFAReq = isMFAReq;
+	}
+	public AccessLinksResponse getDefaultPage() {
+		return defaultPage;
+	}
+	public void setDefaultPage(AccessLinksResponse defaultPage) {
+		this.defaultPage = defaultPage;
+	}
+	public Long getPasswordExpiredInDays() {
+		return passwordExpiredInDays;
+	}
+	public void setPasswordExpiredInDays(Long passwordExpiredInDays) {
+		this.passwordExpiredInDays = passwordExpiredInDays;
+	}
+	public String getFirstName() {
+		return firstName;
+	}
+	public void setFirstName(String firstName) {
+		this.firstName = firstName;
+	}
+	public String getMiddleName() {
+		return middleName;
+	}
+	public void setMiddleName(String middleName) {
+		this.middleName = middleName;
+	}
+	public String getLastName() {
+		return lastName;
+	}
+	public void setLastName(String lastName) {
+		this.lastName = lastName;
+	}
+	public Boolean getIsPasswordExpires() {
+		return isPasswordExpires;
+	}
+	public void setIsPasswordExpires(Boolean isPasswordExpires) {
+		this.isPasswordExpires = isPasswordExpires;
+	}
+	public Boolean getIsSecurityQuestionsReset() {
+		return isSecurityQuestionsReset;
+	}
+	public void setIsSecurityQuestionsReset(Boolean isSecurityQuestionsReset) {
+		this.isSecurityQuestionsReset = isSecurityQuestionsReset;
+	}
+	public Long getRole() {
+		return role;
+	}
+	public void setRole(Long role) {
+		this.role = role;
+	}
+	public List<AccessLinksResponse> getAccessLinks() {
+		return accessLinks;
+	}
+	public void setAccessLinks(List<AccessLinksResponse> accessLinks) {
+		this.accessLinks = accessLinks;
+	}
+	public String getLoginSessionId() {
+		return loginSessionId;
+	}
+	public void setLoginSessionId(String loginSessionId) {
+		this.loginSessionId = loginSessionId;
+	}
+	public Long getSessionExpiryTime() {
+		return sessionExpiryTime;
+	}
+	public void setSessionExpiryTime(Long sessionExpiryTime) {
+		this.sessionExpiryTime = sessionExpiryTime;
+	}
+	public Long getSessionExpiryWarning() {
+		return sessionExpiryWarning;
+	}
+	public void setSessionExpiryWarning(Long sessionExpiryWarning) {
+		this.sessionExpiryWarning = sessionExpiryWarning;
+	}
+	public String getInstitutionName() {
+		return institutionName;
+	}
+	public void setInstitutionName(String institutionName) {
+		this.institutionName = institutionName;
+	}
+	public String getRtNumber() {
+		return rtNumber;
+	}
+	public void setRtNumber(String rtNumber) {
+		this.rtNumber = rtNumber;
+	}
+	public Long getInstitutionId() {
+		return institutionId;
+	}
+	public void setInstitutionId(Long institutionId) {
+		this.institutionId = institutionId;
+	} 
+	
+	
+}

@@ -1,0 +1,94 @@
+insert into inst_master values(INST_MASTER_SEQ.nextval,'0','0','0','0','0','0','0') ;
+insert into inst_master values(INST_MASTER_SEQ.nextval,'Corporate America Credit Union','','','','','262090120','') ;
+insert into inst_master values(INST_MASTER_SEQ.nextval,'CU HAWAII FEDERAL CREDIT UNION','','','','','321378709','') ;
+insert into inst_master values(INST_MASTER_SEQ.nextval,'UMe FEDERAL CREDIT UNION','','','','','322274132','') ;
+insert into inst_master values(INST_MASTER_SEQ.nextval,'PEN AIR','','','','','263281695','') ;
+insert into inst_master values(INST_MASTER_SEQ.nextval,'Corporate America Credit Union','','','','','262090120','') ;
+insert into inst_master values(INST_MASTER_SEQ.nextval,'CREDIT UNION OF GEORGIA','','','','','261171493','') ;
+insert into inst_master values(INST_MASTER_SEQ.nextval,'SAVANNAH SCHOOLS FEDERAL CREDIT UNION','','','','','261271267','') ;
+
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'What was the name of the town your grandmother lived in','secretQuestionsSet1','1');
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'What was the last name of your favorite teacher in final year of high school?','secretQuestionsSet1','1');
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'Where did you meet your Spouse for the first time?','secretQuestionsSet1','1');
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'In what city were you born?','secretQuestionsSet1','1');
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'What was your favorite restaurant in college?','secretQuestionsSet1','1');
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'What is your aternal grandfather’s first name?','secretQuestionsSet1','1');
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'In What city was your mother born?','secretQuestionsSet1','1');
+
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'Where were you when you first heard about 9/11?','secretQuestionsSet2','1');
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'What was the nickname of your grandfather?','secretQuestionsSet2','1');
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'What was the name of your first stuffed animal?','secretQuestionsSet2','1');
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'What was the name of your first pet?','secretQuestionsSet2','1');
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'What is the first name of the best man at your wedding?','secretQuestionsSet2','1');
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'What was your high school mascot?','secretQuestionsSet2','1');
+
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'What is your maternal grandfather’s first name?','secretQuestionsSet3','1');
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'What is your best friend’s first name?','secretQuestionsSet3','1');
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'What is your maternal grandmother’s first name?','secretQuestionsSet3','1');
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'What is the middle name of your youngest child?','secretQuestionsSet3','1');
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'What was the name of your High School?','secretQuestionsSet3','1');
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'In what city were you married?','secretQuestionsSet3','1');
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'In what city did you meet your Spouse/significant other?','secretQuestionsSet3','1');
+
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'What is your mother’s middle name?','secretQuestionsSet4','1');
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'What is the name of the cam you attended as a child?','secretQuestionsSet4','1');
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'What is the color of your first car?','secretQuestionsSet4','1');
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'What street did your best friend in high school live on?','secretQuestionsSet4','1');
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'In what city was your father born?','secretQuestionsSet4','1');
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'What is your mother’s middle name?','secretQuestionsSet4','1');
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'What school did you attend for sixth grade?','secretQuestionsSet4','1');
+
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'In what city is your vacation home?','secretQuestionsSet5','1');
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'What was the first name of your first manager?','secretQuestionsSet5','1');
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'What is the first name of your oldest niece?','secretQuestionsSet5','1');
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'What was the name of your first girlfriend/boyfriend?','secretQuestionsSet5','1');
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'What is the first name of the maid of honor at your wedding?','secretQuestionsSet5','1');
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'What is the first name of your oldest nehew?','secretQuestionsSet5','1');
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'In what city was your high school?','secretQuestionsSet5','1');
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'What is the name of the first company you worked for?','secretQuestionsSet5','1');
+insert into SECURITY_QUESTIONS values (SECURITY_QUESTIONS_SEQ.nextval,'What is your fathers middle name?','secretQuestionsSet5','1');
+
+insert into ROLES values (ROLES_SEQ.nextval,'Super Admin','1','Super Admin Role', '1');
+
+insert into PASSWORD_RULES values (PASSWORD_RULES_SEQ.nextval, '1','1', 'Password Rule', 90, 3, 6, 1, 1, 1, 1, '0', '0', '0', '', 3, 3);
+
+insert into access_links values(ACCESS_LINKS_SEQ.nextval,'1','dashboard','Dash Board','Dash Board','0','EMAIL',null);
+insert into access_links values(ACCESS_LINKS_SEQ.nextval,'1','myServices','My Services','My Services','0','EMAIL',null);
+insert into access_links values(ACCESS_LINKS_SEQ.nextval,'1','changeSecurityQuestion','change Security Question','changeSecurityQuestiontrue','0','EMAIL',null);
+insert into access_links values(ACCESS_LINKS_SEQ.nextval,'1','changePassword','Change Password','Change Password','0','EMAIL',null);
+insert into access_links values(ACCESS_LINKS_SEQ.nextval,'1','viewPersonalInformation','View Personal Information','View Personal Information','0','EMAIL',null);
+insert into access_links values(ACCESS_LINKS_SEQ.nextval,'1','alerts','Alerts','Alerts','0','EMAIL',null);
+insert into access_links values(ACCESS_LINKS_SEQ.nextval,'1','irisMail','Iris Mail','Iris Mail','0','EMAIL',null);
+insert into access_links values(ACCESS_LINKS_SEQ.nextval,'1','userAdminOnboarding','User/Admin Onboarding','User/Admin Onboarding','0','EMAIL',null);
+insert into access_links values(ACCESS_LINKS_SEQ.nextval,'1','userAdminLoginSupport','User/Admin Login Support','User/Admin Login Support','0','EMAIL',null);
+insert into access_links values(ACCESS_LINKS_SEQ.nextval,'1','subUserCreation','Sub User Creation','Sub User Creation','0','EMAIL',null);
+insert into access_links values(ACCESS_LINKS_SEQ.nextval,'1','accessTypes','Access Types','Access Types','0','EMAIL',null);
+insert into access_links values(ACCESS_LINKS_SEQ.nextval,'1','passwordRules','Password Rules','Password Rules','0','EMAIL',null);
+insert into access_links values(ACCESS_LINKS_SEQ.nextval,'1','cacuOtpConfigurations','Cacu Otp Configurations','Cacu Otp Configurations','0','EMAIL',null);
+insert into access_links values(ACCESS_LINKS_SEQ.nextval,'1','userlevelOtpConfigurations','User level Otp Configurations','User level Otp Configurations','0','EMAIL',null);
+insert into access_links values(ACCESS_LINKS_SEQ.nextval,'1','forgotPassword','Forgot Password','Forgot Password','0','EMAIL',null);
+insert into access_links values(ACCESS_LINKS_SEQ.nextval,'1','firstLogin','First Login','First Login','0','EMAIL',null);
+insert into access_links values(ACCESS_LINKS_SEQ.nextval,'1','deviceComputerChanges','Device Computer Changes','Device Computer Changes','0','EMAIL',null);
+
+insert into UMGMT_USERS values(UMGMT_USERS_SEQ.nextval,'vsoftomni@gmail.com','1','corporate','','America','Newpass2@','0', 'vsoftomni@gmail.com', '9573423285', '', '', 'Verified', '1', '1', CURRENT_TIMESTAMP, null) ;
+
+insert into ROLE_PREVILEGE_LINKS values (ROLE_PREVILEGE_LINKS_SEQ.nextval, '1', '2', 2, '1');
+insert into ROLE_PREVILEGE_LINKS values (ROLE_PREVILEGE_LINKS_SEQ.nextval, '1', '3', 3, '1');
+insert into ROLE_PREVILEGE_LINKS values (ROLE_PREVILEGE_LINKS_SEQ.nextval, '1', '4', 4, '1');
+insert into ROLE_PREVILEGE_LINKS values (ROLE_PREVILEGE_LINKS_SEQ.nextval, '1', '5', 5, '1');
+insert into ROLE_PREVILEGE_LINKS values (ROLE_PREVILEGE_LINKS_SEQ.nextval, '1', '6', 6, '1');
+insert into ROLE_PREVILEGE_LINKS values (ROLE_PREVILEGE_LINKS_SEQ.nextval, '1', '7', 7, '1');
+insert into ROLE_PREVILEGE_LINKS values (ROLE_PREVILEGE_LINKS_SEQ.nextval, '1', '8', 8, '1');
+insert into ROLE_PREVILEGE_LINKS values (ROLE_PREVILEGE_LINKS_SEQ.nextval, '1', '9', 9, '1');
+insert into ROLE_PREVILEGE_LINKS values (ROLE_PREVILEGE_LINKS_SEQ.nextval, '1', '10', 10, '1');
+insert into ROLE_PREVILEGE_LINKS values (ROLE_PREVILEGE_LINKS_SEQ.nextval, '1', '11', 11, '1');
+insert into ROLE_PREVILEGE_LINKS values (ROLE_PREVILEGE_LINKS_SEQ.nextval, '1', '12', 12, '1');
+insert into ROLE_PREVILEGE_LINKS values (ROLE_PREVILEGE_LINKS_SEQ.nextval, '1', '13', 13, '1');
+insert into ROLE_PREVILEGE_LINKS values (ROLE_PREVILEGE_LINKS_SEQ.nextval, '1', '14', 14, '1');
+insert into ROLE_PREVILEGE_LINKS values (ROLE_PREVILEGE_LINKS_SEQ.nextval, '1', '15', 15, '1');
+insert into ROLE_PREVILEGE_LINKS values (ROLE_PREVILEGE_LINKS_SEQ.nextval, '1', '16', 16, '1');
+insert into ROLE_PREVILEGE_LINKS values (ROLE_PREVILEGE_LINKS_SEQ.nextval, '1', '17', 17, '1');
+
+insert into INSTITUTE_PARAMS values (INSTITUTE_PARAMS_SEQ.nextval, '1', 'SESSION_EXPIRY_TIME', '3600');
+insert into INSTITUTE_PARAMS values (INSTITUTE_PARAMS_SEQ.nextval, '1', 'SESSION_EXPIRY_WARNING', '30');
+

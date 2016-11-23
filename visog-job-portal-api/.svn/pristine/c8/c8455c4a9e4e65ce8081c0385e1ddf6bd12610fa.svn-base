@@ -1,0 +1,111 @@
+package com.vsoftcorp.usermgmt.model;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+
+@Entity
+@Table(name = "ACCESS_LINKS")
+public class AccessLinks {
+
+	@Id
+	@Column(name = "ACCESS_LINK_ID")
+	@SequenceGenerator(name = "ACCESS_LINKS_SEQ", sequenceName = "ACCESS_LINKS_SEQ", allocationSize = 1)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "ACCESS_LINKS_SEQ")
+	private Long accessLinkId;
+
+	@ManyToOne
+	@JoinColumn(name = "INST_ID")
+	private InstitutionMaster instId;
+
+	@Column(name = "NAME")
+	private String name;
+	
+	@Column(name = "DISPLAY_NAME")
+	private String displayName;
+	
+	@Column(name = "DESCRIPTION")
+	private String description;
+	
+	@Column(name = "IS_OTP_REQ")
+	private String isOtpReq;
+	
+	@Column(name = "OTP_MEDIA")
+	private String otpMedia;
+
+	@ManyToOne
+	@JoinColumn(name = "PARENT_ID")
+	private AccessLinks parentId;
+
+
+	public InstitutionMaster getInstId() {
+		return instId;
+	}
+
+	public void setInstId(InstitutionMaster instId) {
+		this.instId = instId;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getDisplayName() {
+		return displayName;
+	}
+
+	public void setDisplayName(String displayName) {
+		this.displayName = displayName;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public AccessLinks getParentId() {
+		return parentId;
+	}
+
+	public void setParentId(AccessLinks parentId) {
+		this.parentId = parentId;
+	}
+
+	public Long getAccessLinkId() {
+		return accessLinkId;
+	}
+
+	public void setAccessLinkId(Long accessLinkId) {
+		this.accessLinkId = accessLinkId;
+	}
+
+	public String getIsOtpReq() {
+		return isOtpReq;
+	}
+
+	public void setIsOtpReq(String isOtpReq) {
+		this.isOtpReq = isOtpReq;
+	}
+
+	public String getOtpMedia() {
+		return otpMedia;
+	}
+
+	public void setOtpMedia(String otpMedia) {
+		this.otpMedia = otpMedia;
+	}
+
+}

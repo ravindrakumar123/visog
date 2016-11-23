@@ -1,0 +1,24 @@
+[main]
+#Shiro with Database
+
+#dataSource = org.apache.shiro.jndi.JndiObjectFactory
+#dataSource.resourceName = java:/comp/env/jdbc/usermgmtDB
+ 
+jdbcRealm = org.apache.shiro.realm.jdbc.JdbcRealm
+#jdbcRealm.dataSource = $dataSource
+#jdbcRealm.authenticationQuery = SELECT password FROM umgmt_users WHERE USER_NAME= ? 
+#jdbcRealm.userRolesQuery = SELECT INST_ID FROM umgmt_users WHERE user_name = ?
+
+builtInCacheManager = org.apache.shiro.cache.MemoryConstrainedCacheManager
+securityManager.cacheManager = $builtInCacheManager
+
+#authc = org.apache.shiro.web.filter.authc.PassThruAuthenticationFilter
+#authc.loginUrl = /login.jsp
+#user.loginUrl = /login.jsp
+
+
+#[roles]
+
+#[urls]
+#/login.jsp = authc
+#/home.jsp = authc

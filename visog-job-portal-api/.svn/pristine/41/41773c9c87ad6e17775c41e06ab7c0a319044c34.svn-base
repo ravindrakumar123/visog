@@ -1,0 +1,221 @@
+package com.vsoftcorp.usermgmt.model;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+
+@Entity
+@Table(name = "PASSWORD_RULES")
+public class PasswordRules {
+	
+	@Id
+	@Column(name = "PASSWORD_RULE_ID")
+	@SequenceGenerator(name = "PASSWORD_RULES_SEQ", sequenceName = "PASSWORD_RULES_SEQ", allocationSize = 1)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "PASSWORD_RULES_SEQ")
+	private Long passwordRuleId;
+
+	@OneToOne
+	@JoinColumn(name = "INST_ID")
+	private InstitutionMaster instId;
+	
+	@ManyToOne
+	@JoinColumn(name = "ROLE_ID")
+	private Roles roleId;
+	
+	@Column(name = "PASSWORD_EXPIRY_DAYS")
+	private Integer passwordExpiryDays;
+	
+	@Column(name = "CHECK_LAST_PASSWORD")
+	private Integer checkLastPassword;
+	
+	@Column(name = "MINIMUM_LENGTH")
+	private Integer minimumLength;
+	
+	@Column(name = "MINIMUM_LOWER_CASE_CHARS")
+	private Integer minimumLowerCaseChars;
+	
+	@Column(name = "MINIMUM_NUMERIC_CHARS")
+	private Integer minimumNumericChars;
+	
+	@Column(name = "MINIMUM_SPECIAL_CHARS")
+	private Integer minimumSpecialChars;
+	
+	@Column(name = "MINIMUM_UPPER_CASE_CHARS")
+	private Integer minimumUpperCaseChars;
+	
+	@Column(name = "PASSWORD_KEYWORDS")
+	private String passwordKeywords;
+	
+	@Column(name = "FAILED_LOGIN_ATTEMPTS")
+	private Integer failedLoginAttempts;
+	
+	@Column(name = "EXPIRY_WARNING_AFTER")
+	private Integer expiryWarningAfter;
+	
+	@Column(name = "RESTRICT_NAME_IN_PASSWORD")
+	private String restrictNameInPassword;
+	
+	@Column(name = "RESTRICT_PASSWORD_KEYWORDS")
+	private String restrictPasswordKeywords;
+	
+	@Column(name = "RESTRICT_USERID_IN_PASSWORD")
+	private String restrictUseridInPassword;
+	
+	@Column(name = "PASSWORD_RULE_NAME")
+	private String passwordRuleName;
+	
+	@Column(name = "RANDOM_SEC_QUES_CNT")
+	private Integer randomSecurityQuestionsCount;
+	
+	public Long getPasswordRuleId() {
+		return passwordRuleId;
+	}
+
+	public void setPasswordRuleId(Long passwordRuleId) {
+		this.passwordRuleId = passwordRuleId;
+	}
+
+	public InstitutionMaster getInstId() {
+		return instId;
+	}
+
+	public void setInstId(InstitutionMaster instId) {
+		this.instId = instId;
+	}
+
+	public Integer getPasswordExpiryDays() {
+		return passwordExpiryDays;
+	}
+
+	public void setPasswordExpiryDays(Integer passwordExpiryDays) {
+		this.passwordExpiryDays = passwordExpiryDays;
+	}
+
+	public Integer getCheckLastPassword() {
+		return checkLastPassword;
+	}
+
+	public void setCheckLastPassword(Integer checkLastPassword) {
+		this.checkLastPassword = checkLastPassword;
+	}
+
+	public Integer getMinimumLength() {
+		return minimumLength;
+	}
+
+	public void setMinimumLength(Integer minimumLength) {
+		this.minimumLength = minimumLength;
+	}
+
+	public Integer getMinimumLowerCaseChars() {
+		return minimumLowerCaseChars;
+	}
+
+	public void setMinimumLowerCaseChars(Integer minimumLowerCaseChars) {
+		this.minimumLowerCaseChars = minimumLowerCaseChars;
+	}
+
+	public Integer getMinimumNumericChars() {
+		return minimumNumericChars;
+	}
+
+	public void setMinimumNumericChars(Integer minimumNumericChars) {
+		this.minimumNumericChars = minimumNumericChars;
+	}
+
+	public Integer getMinimumSpecialChars() {
+		return minimumSpecialChars;
+	}
+
+	public void setMinimumSpecialChars(Integer minimumSpecialChars) {
+		this.minimumSpecialChars = minimumSpecialChars;
+	}
+
+	public Integer getMinimumUpperCaseChars() {
+		return minimumUpperCaseChars;
+	}
+
+	public void setMinimumUpperCaseChars(Integer minimumUpperCaseChars) {
+		this.minimumUpperCaseChars = minimumUpperCaseChars;
+	}
+
+	public Integer getFailedLoginAttempts() {
+		return failedLoginAttempts;
+	}
+
+	public void setFailedLoginAttempts(Integer failedLoginAttempts) {
+		this.failedLoginAttempts = failedLoginAttempts;
+	}
+
+	public Integer getExpiryWarningAfter() {
+		return expiryWarningAfter;
+	}
+
+	public void setExpiryWarningAfter(Integer expiryWarningAfter) {
+		this.expiryWarningAfter = expiryWarningAfter;
+	}
+
+	public String getRestrictNameInPassword() {
+		return restrictNameInPassword;
+	}
+
+	public void setRestrictNameInPassword(String restrictNameInPassword) {
+		this.restrictNameInPassword = restrictNameInPassword;
+	}
+
+	public String getRestrictPasswordKeywords() {
+		return restrictPasswordKeywords;
+	}
+
+	public void setRestrictPasswordKeywords(String restrictPasswordKeywords) {
+		this.restrictPasswordKeywords = restrictPasswordKeywords;
+	}
+
+	public String getRestrictUseridInPassword() {
+		return restrictUseridInPassword;
+	}
+
+	public void setRestrictUseridInPassword(String restrictUseridInPassword) {
+		this.restrictUseridInPassword = restrictUseridInPassword;
+	}
+
+	public String getPasswordRuleName() {
+		return passwordRuleName;
+	}
+
+	public void setPasswordRuleName(String passwordRuleName) {
+		this.passwordRuleName = passwordRuleName;
+	}
+
+	public String getPasswordKeywords() {
+		return passwordKeywords;
+	}
+
+	public void setPasswordKeywords(String passwordKeywords) {
+		this.passwordKeywords = passwordKeywords;
+	}
+
+	public Roles getRoleId() {
+		return roleId;
+	}
+
+	public void setRoleId(Roles roleId) {
+		this.roleId = roleId;
+	}
+
+	public Integer getRandomSecurityQuestionsCount() {
+		return randomSecurityQuestionsCount;
+	}
+
+	public void setRandomSecurityQuestionsCount(Integer randomSecurityQuestionsCount) {
+		this.randomSecurityQuestionsCount = randomSecurityQuestionsCount;
+	}
+
+}

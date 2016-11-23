@@ -1,0 +1,29 @@
+package com.vsoftcorp.usermgmt.req;
+
+import java.util.List;
+
+
+public class UsersStatusReq {
+
+	private List<Long>	 users;
+
+	private String status;
+
+	public List<Long> getUsers() {
+		return users;
+	}
+
+	public void setUsers(List<Long> users) {
+		this.users = users;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+
+}

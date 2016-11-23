@@ -1,0 +1,115 @@
+package com.vsoftcorp.usermgmt.utils;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.SignatureException;
+
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.log4j.Logger;
+import org.json.JSONObject;
+
+import com.auth0.jwt.JWTSigner;
+import com.auth0.jwt.JWTVerifier;
+import com.auth0.jwt.JWTVerifyException;
+import com.auth0.jwt.internal.com.fasterxml.jackson.core.type.TypeReference;
+import com.auth0.jwt.internal.com.fasterxml.jackson.databind.ObjectMapper;
+import com.vsoftcorp.usermgmt.serviceimpl.SecurityServiceImpl;
+
+public class SecurityUtils {
+
+	private static final Logger logger = Logger.getLogger(SecurityServiceImpl.class);
+
+	public static String encode(String key, String data) {
+		return Jwts.builder()
+				  .setSubject(data)
+				  .signWith(SignatureAlgorithm.HS256, key)
+				  .compact();
+		
+	}
+
+	public static String decode(String key, String data) {
+		try {
+
+		   Jws<Claims> jws = Jwts.parser().setSigningKey(key).parseClaimsJws(data);
+
+		    logger.info(key +" : OK, we can trust this JWT");
+		    System.out.println("OK, we can trust this JWT key and ciher text");
+
+			return jws.getBody().getSubject();
+
+		} catch (SignatureException e) {
+
+		    logger.error(key +" : don't trust this JWT cipher text and the key", e);
+		    System.out.println("don't trust the JWT!");
+		    return null;
+		}
+		
+	}
+
+	public static JSONObject decodeToJSON(String key, String data) {
+//		String jwtKey = "3Gi2fO8IYDSzm8_XApeblINMygU";
+//		String jwtPayload = "eyJhbGciOiJIUzI1NiJ9.eyJhY3Rpdml0eSI6ImxvZ2luIn0.cVq2Oxk0VZocLkDjJFjicrWgzo-1gOPoee-nbe1OOpo";
+		
+		try {
+		    final JWTVerifier verifier = new JWTVerifier(key);
+		    final Map<String,Object> claims = verifier.verify(data);
+		    
+		    return new JSONObject(claims);
+		    
+		} catch (JWTVerifyException e) {
+			e.printStackTrace();
+			return null;
+		} catch (InvalidKeyException e) {
+			e.printStackTrace();
+			return null;
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+			return null;
+		} catch (IllegalStateException e) {
+			e.printStackTrace();
+			return null;
+		} catch (java.security.SignatureException e) {
+			e.printStackTrace();
+			return null;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	public static void main(String[] args) {
+		String key = "3Gi2fO8IYDSzm8_XApeblINMygU";
+		JSONObject jsonObject = new JSONObject();
+		jsonObject.put("userName", "amitmourya@gmail.com");
+		jsonObject.put("password", "bvLpwcCF");
+		jsonObject.put("xFactor", "dskjchskj");
+		
+		String cipherText = encodeJSON(key, jsonObject);
+		System.out.println("cipherText :"+cipherText);
+		JSONObject decodedText = decodeToJSON(key, cipherText);
+		System.out.println("decodedText : "+decodedText);
+
+		System.out.println(decodeToJSON("3Gi2fO8IYDSzm8_XApeblINMygU", "eyJhbGciOiJIUzI1NiJ9.eyJhY3Rpdml0eSI6ImxvZ2luIn0.cVq2Oxk0VZocLkDjJFjicrWgzo-1gOPoee-nbe1OOpo"));
+	}
+	
+	private static String encodeJSON(String key, JSONObject jsonObject) {
+		final JWTSigner signer = new JWTSigner(key);
+		ObjectMapper mapper = new ObjectMapper();
+		Map<String, Object> map = new HashMap<String, Object>();
+
+		// convert JSON string to Map
+		try {
+			map = mapper.readValue(jsonObject.toString(), new TypeReference<Map<String, String>>(){});
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return signer.sign(map);	
+	}
+}

@@ -1,0 +1,30 @@
+package com.vsoftcorp.usermgmt.res;
+
+import java.util.Date;
+
+public class FailureReportsResponse {
+	private Long loginMasterId;
+	private String attemptedOn;
+	private String reason;
+	
+	public Long getLoginMasterId() {
+		return loginMasterId;
+	}
+	public void setLoginMasterId(Long loginMasterId) {
+		this.loginMasterId = loginMasterId;
+	}
+	
+	public String getAttemptedOn() {
+		return attemptedOn;
+	}
+	public void setAttemptedOn(String attemptedOn) {
+		this.attemptedOn = attemptedOn;
+	}
+	public String getReason() {
+		return reason;
+	}
+	public void setReason(String reason) {
+		this.reason = reason;
+	}
+
+}

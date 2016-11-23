@@ -1,0 +1,158 @@
+package com.vsoftcorp.usermgmt.serviceimpl;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+import org.apache.log4j.Logger;
+
+import com.vsoftcorp.usermgmt.constants.AppConstants;
+import com.vsoftcorp.usermgmt.dao.ReportDao;
+import com.vsoftcorp.usermgmt.model.LoginMaster;
+import com.vsoftcorp.usermgmt.model.User;
+import com.vsoftcorp.usermgmt.res.AuditLoginResponse;
+import com.vsoftcorp.usermgmt.res.FailureReportsResponse;
+import com.vsoftcorp.usermgmt.res.SuccessLoginAttemptsResponse;
+import com.vsoftcorp.usermgmt.service.ReportService;
+import com.vsoftcorp.usermgmt.utils.PropertyUtil;
+
+@Singleton
+public class ReportServiceImpl implements ReportService{
+
+	private static final Logger logger = Logger.getLogger(AdminServiceImpl.class);
+
+	@Inject
+	ReportDao dao;
+	
+	/**
+	 * This method fetches the Audit Login details for all the users
+	 */
+	public List<AuditLoginResponse> getAuditLoginReport() {
+		
+		List<LoginMaster> loginMasterList = dao.getAuditLoginReport();
+		
+		AuditLoginResponse response = null;
+		List<AuditLoginResponse> responses = new ArrayList<>();
+
+		SimpleDateFormat dateFormat = new SimpleDateFormat(PropertyUtil.getProperty("APP_DATETIME_FORMAT"));
+		
+		for (LoginMaster loginMaster : loginMasterList) {
+			response = new AuditLoginResponse();
+			
+			User userObj = loginMaster.getUserId();
+			
+			if(userObj != null){
+				if(userObj.getFirstName() != null){
+					response.setFirstName(userObj.getFirstName());
+				} 				
+				
+				if(userObj.getMiddleName() != null){
+					response.setMiddleName(userObj.getMiddleName());
+				}
+				
+				if(userObj.getLastName() != null){
+					response.setLastName(userObj.getLastName());
+				}
+				
+				if(loginMaster.getUserId().getUserId() != null){
+					response.setUserId(userObj.getUserId());
+				}
+			}
+			
+			if(loginMaster.getEmailId() != null) {
+				response.setEmailId(loginMaster.getEmailId());
+			}
+			response.setCreatedOn(dateFormat.format(loginMaster.getCreatedOn()));
+			response.setInstId(loginMaster.getInstId().getInstId());
+			response.setName(loginMaster.getInstId().getName());
+			response.setRtNum(loginMaster.getInstId().getRtNum());
+			response.setLoginMasterId(loginMaster.getLoginMasterId());
+			response.setSuccessInd(AppConstants.TRUE_CHAR.equals(loginMaster.getSuccessInd()));
+			
+			if(loginMaster.getSessionTime() != null) {
+				response.setSessionTime(dateFormat.format(loginMaster.getSessionTime()));
+			}
+			
+			if(loginMaster.getInOutDate() != null) {
+				response.setInOutDate(dateFormat.format(loginMaster.getInOutDate()));
+			}
+			
+			if(loginMaster.getLastLoginDate() != null) {
+				response.setLastLoginDate(dateFormat.format(loginMaster.getLastLoginDate()));
+			}
+			
+			response.setInOutInd(AppConstants.TRUE_CHAR.equals(loginMaster.getInOutInd()));
+			responses.add(response);
+		}
+		return responses;
+				
+	}
+
+	/**
+	 * This method fetches the Success Login attempts for the given user by using userId
+	 */
+	public List<SuccessLoginAttemptsResponse> getSuccessLoginAttemptsReport(Long userId) {
+		
+		User user = new User();
+		user.setUserId(userId);
+		
+		List<LoginMaster> loginMasterList = dao.getSuccessLoginAttemptsReport(user);
+		
+		SuccessLoginAttemptsResponse response = null;
+		List<SuccessLoginAttemptsResponse> responses = new ArrayList<>();
+		
+		SimpleDateFormat dateFormat = new SimpleDateFormat(PropertyUtil.getProperty("APP_DATETIME_FORMAT"));
+		
+		for (LoginMaster loginMaster : loginMasterList) {
+			response = new SuccessLoginAttemptsResponse();
+			
+			response.setLoginMasterId(loginMaster.getLoginMasterId());
+			response.setEmailId(loginMaster.getEmailId());
+			
+			if(loginMaster.getLastLoginDate() != null) {
+				response.setLoginTime(dateFormat.format(loginMaster.getLastLoginDate()));
+			}
+				response.setIsLoggedIn(AppConstants.TRUE_CHAR.equals(loginMaster.getInOutInd()));
+				
+			if(AppConstants.FALSE_CHAR.equals(loginMaster.getInOutInd())) {
+				if(loginMaster.getInOutDate() != null) {
+					response.setLogOutTime(dateFormat.format(loginMaster.getInOutDate()));
+				}
+			}		
+			responses.add(response);
+		}
+		return responses;
+	}
+	
+	/**
+	 * Get Login Failure Attempts for the given user
+	 */
+	public List<FailureReportsResponse> getFailureLoginAttemptsReport(Long userId) {
+		
+		  FailureReportsResponse response = null;
+		  User user = new User();
+		  user.setUserId(userId);
+		  
+		  List<LoginMaster> loginMasterlist = dao.getFailureLoginAttemptsReport(user);
+		  
+		  logger.info("Login Masterlist size----------->"+loginMasterlist.size());
+		  List<FailureReportsResponse> responseList = new ArrayList<>();
+		  SimpleDateFormat formatter = new SimpleDateFormat(PropertyUtil.getProperty("APP_DATETIME_FORMAT"));
+		 
+		  for(LoginMaster loginMaster : loginMasterlist){
+			  response = new FailureReportsResponse();
+			  response.setLoginMasterId(loginMaster.getLoginMasterId());
+			  response.setAttemptedOn(formatter.format(loginMaster.getCreatedOn()));
+			  response.setReason("Invalid User Credetials");
+			  
+			  responseList.add(response);
+		  }
+		
+		return responseList;
+	}
+
+
+}

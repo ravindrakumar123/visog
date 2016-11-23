@@ -1,0 +1,22 @@
+package com.vsoftcorp.usermgmt.exceptions;
+
+
+public class UserMgmtException extends RuntimeException  {
+	
+	private String erroMsg;
+	
+	public UserMgmtException(String erroMsg) {
+		this.erroMsg = erroMsg;
+	}
+
+	public String getErroMsg() {
+		return erroMsg;
+	}
+
+	public void setErroMsg(String erroMsg) {
+		this.erroMsg = erroMsg;
+	}
+	
+	
+
+}

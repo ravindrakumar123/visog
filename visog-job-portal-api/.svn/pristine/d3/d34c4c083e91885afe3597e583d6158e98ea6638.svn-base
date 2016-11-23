@@ -1,0 +1,24 @@
+package com.vsoftcorp.usermgmt.dao;
+
+import java.util.Date;
+import java.util.List;
+
+import com.vsoftcorp.usermgmt.model.LoginMaster;
+import com.vsoftcorp.usermgmt.model.User;
+
+public interface ReportDao {
+
+	List<User> getUsersBetweenDates(Date startDate, Date endDate);
+
+	List<User> getUsersForDate(Date createOnStartDate, Date createOnEndDate);
+
+	List<User> getUsersWithSearch(Date createOnStartDate, Date createOnEndDate, String emailId, 
+			String firstName, String middleName, String lastName);
+
+	List<LoginMaster> getAuditLoginReport();
+
+	List<LoginMaster> getSuccessLoginAttemptsReport(User user);
+	
+	public  List<LoginMaster> getFailureLoginAttemptsReport(Long instId, User user);
+
+}

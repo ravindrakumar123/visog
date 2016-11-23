@@ -1,0 +1,44 @@
+package com.vsoftcorp.usermgmt.req;
+
+import java.util.List;
+
+public class RolePrevilegesNameReq {
+
+	private String roleName;
+	private String description;
+	private String userType;
+	private Boolean multipleLogin;
+	private List<String> accessLinks;
+	
+	public String getRoleName() {
+		return roleName;
+	}
+	public void setRoleName(String roleName) {
+		this.roleName = roleName;
+	}
+	public List<String> getAccessLinks() {
+		return accessLinks;
+	}
+	public void setAccessLinks(List<String> accessLinks) {
+		this.accessLinks = accessLinks;
+	}
+	public String getDescription() {
+		return description;
+	}
+	public void setDescription(String description) {
+		this.description = description;
+	}
+	public Boolean getMultipleLogin() {
+		return multipleLogin;
+	}
+	public void setMultipleLogin(Boolean multipleLogin) {
+		this.multipleLogin = multipleLogin;
+	}
+	public String getUserType() {
+		return userType;
+	}
+	public void setUserType(String userType) {
+		this.userType = userType;
+	}
+	
+}

@@ -1,0 +1,32 @@
+package com.vsoftcorp.usermgmt.service;
+
+import java.util.List;
+
+import com.vsoftcorp.usermgmt.req.AccessLinksReq;
+import com.vsoftcorp.usermgmt.req.RolesReq;
+import com.vsoftcorp.usermgmt.res.AccessLinksResponse;
+import com.vsoftcorp.usermgmt.res.RolesResponse;
+
+public interface RoleService {
+
+	public Long saveRoles(Long institutionId, RolesReq rolesReq);
+
+	public List<RolesResponse> getRoles(Long institutionId);
+
+	public RolesResponse getRole(Long roleId);
+
+	public void updateRole(RolesReq rolesReq, Long roleId);
+
+	public Boolean deleteRole(Long roleId);
+
+	public Long saveAccessLinks(Long institutionId, AccessLinksReq accessLinksReq);
+
+	public List<AccessLinksResponse> getAccessLinks(Long institutionId);
+
+	public AccessLinksResponse getAccessLink(Long accessLinkId);
+
+	public void updateAccessLink(AccessLinksReq accessLinksReq, Long accessLinkId);
+
+	public Boolean deleteAccessLink(Long accessLinkId);
+
+}

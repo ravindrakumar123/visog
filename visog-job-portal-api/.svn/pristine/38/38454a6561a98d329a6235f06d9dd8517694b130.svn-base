@@ -1,0 +1,15 @@
+package com.vsoftcorp.usermgmt.res;
+
+public class DataIdResponse {
+
+	private Long id;
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+	
+}

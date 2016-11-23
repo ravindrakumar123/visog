@@ -1,0 +1,69 @@
+package com.vsoftcorp.usermgmt.utils;
+
+
+import java.io.IOException;
+import java.util.Properties;
+
+import org.apache.log4j.Logger;
+
+public class PropertyUtil {
+
+	private static Logger logger = Logger.getLogger("PropertyUtil");
+	
+	private static Properties properties;
+
+	private static Properties mailProperties;
+
+	private static Properties smsProperties;
+	
+	private static Properties ssoProperties;
+
+	public static void setProperties() {
+		try {
+			Properties props = new Properties();
+			ClassLoader classLoader = PropertyUtil.class.getClassLoader();
+			props.load(classLoader.getResourceAsStream("usermgmt.properties"));
+			properties = props;
+
+			props = new Properties();
+			props.load(classLoader.getResourceAsStream("alert_mail_msgs.properties"));
+			mailProperties = props;
+
+			props = new Properties();
+			props.load(classLoader.getResourceAsStream("alert_sms_msgs.properties"));
+			smsProperties = props;
+			
+			props = new Properties();
+			props.load(classLoader.getResourceAsStream("vsoft_sso.properties"));
+			ssoProperties = props;
+		} catch (IOException e) {
+			logger.error("Error in loading properties", e);
+		}
+		
+	}
+	
+	public static String getProperty(String propertyName) {
+		
+		return properties.getProperty(propertyName);
+		
+	}
+
+	public static String getMailProperty(String propertyName) {
+		
+		return mailProperties.getProperty(propertyName);
+		
+	}
+
+	public static String getSMSProperty(String propertyName) {
+		
+		return smsProperties.getProperty(propertyName);
+		
+	}
+	
+	public static String getSSOProperty(String propertyName) {
+		
+		return ssoProperties.getProperty(propertyName);
+		
+	}
+
+}

@@ -1,0 +1,15 @@
+package com.vsoftcorp.usermgmt.constants;
+
+public interface AppConstants {
+
+	String OTP_STATUS_PENDING 	= "PENDING";
+	String OTP_STATUS_VERIFIED 	= "VERIFIED";
+	
+	String TRUE_CHAR = "1";
+	String FALSE_CHAR = "0";
+	
+	String OTP_MEDIA_EMAIL 	= "0";
+	String OTP_MEDIA_SMS 	= "1";
+	String OTP_MEDIA_BOTH 	= "2";
+	
+}

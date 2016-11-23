@@ -1,0 +1,352 @@
+package com.vsoftcorp.usermgmt.daoimpl;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.inject.Singleton;
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+import javax.transaction.Transactional;
+
+import org.apache.log4j.Logger;
+
+import com.vsoftcorp.usermgmt.dao.SecurityDao;
+import com.vsoftcorp.usermgmt.model.AccessLinks;
+import com.vsoftcorp.usermgmt.model.InstitutionMaster;
+import com.vsoftcorp.usermgmt.model.RolePrevilegeLinks;
+import com.vsoftcorp.usermgmt.model.Roles;
+import com.vsoftcorp.usermgmt.model.SecurityQuestions;
+import com.vsoftcorp.usermgmt.model.User;
+import com.vsoftcorp.usermgmt.model.UserSecurityQuestions;
+import com.vsoftcorp.usermgmt.model.UserXfactors;
+import com.vsoftcorp.usermgmt.req.UserSecurityQuestionReq;
+import com.vsoftcorp.usermgmt.req.UserSecurityQuestionsReq;
+
+@Singleton
+@Transactional
+public class SecurityDaoImpl implements SecurityDao {
+
+	private static final Logger logger = Logger.getLogger(SecurityDaoImpl.class);
+
+	@PersistenceContext(unitName = "VsoftUserManagement")
+	private EntityManager em;
+
+
+	/**
+	 * This method save the security questions and returns question id
+	 */
+	public Long saveSecurityQuestions(SecurityQuestions securityQuestion) {
+		em.persist(securityQuestion);
+		return securityQuestion.getQuestionsId();
+	}
+	
+	/**
+	 * This method returns the security questions for the given institution
+	 */
+	public List<SecurityQuestions> getSecurityQuestions(InstitutionMaster institutionMaster) {
+	
+		try {
+			CriteriaBuilder qb = em.getCriteriaBuilder();
+			CriteriaQuery<SecurityQuestions> cq = qb.createQuery(SecurityQuestions.class);
+			Root<SecurityQuestions> securityQuestions = cq.from(SecurityQuestions.class);
+
+			List<Predicate> predicates = new ArrayList<Predicate>();
+
+			predicates.add(qb.equal(securityQuestions.get("instId"), institutionMaster));
+
+			cq.select(securityQuestions);
+
+			cq.where(predicates.toArray(new Predicate[] {}));
+
+			return em.createQuery(cq).getResultList();
+		} catch (NoResultException nre) {
+			return null;
+		} catch (Exception e) {
+			throw e;
+		}
+
+	}
+	
+	/**
+	 * This method returns the security question for the given question id
+	 */
+	public SecurityQuestions getSecurityQuestion(Long questionId) {
+		return em.find(SecurityQuestions.class, questionId);
+	}
+
+	/**
+	 * This method updates the security question 
+	 */
+	public void updateSecurityQuestion(SecurityQuestions securityQuestions) {
+		em.merge(securityQuestions);
+	}
+
+	/**
+	 * This method deletes the security question for the given question id
+	 */
+	public Boolean deleteSecurityQuestion(Long questionId) {
+		Query query = em
+				.createQuery("DELETE FROM SecurityQuestions WHERE questionsId = :questionsId");
+
+		query.setParameter("questionsId", questionId);
+
+		int deletionCount = query.executeUpdate();
+		return (deletionCount != 0);
+	}
+
+	/**
+	 * This method returns the user security questions for the given user id
+	 */
+	public List<SecurityQuestions> getUserSecurityQuestions(User userId) {
+		String userSecurityQuery = "SELECT usq.questions FROM UserSecurityQuestions usq JOIN usq.questions q WHERE usq.userId = :userId";
+		Query q = em.createQuery(userSecurityQuery, SecurityQuestions.class);
+		q.setParameter("userId", userId);
+
+		return q.getResultList();
+	}
+
+	/**
+	 * This method save the user security questions
+	 */
+	public void saveUserSecurityQuestions(List<UserSecurityQuestions> questions) {
+		for(UserSecurityQuestions userSecurityQuestion : questions) {
+			em.persist(userSecurityQuestion);
+		}
+	}
+
+	/**
+	 * This method get the user security questions for the given user id and question id's list
+	 */
+	public List<UserSecurityQuestions> getUserSecurityQuestions(
+			List<SecurityQuestions> userSecurityQuestionsList, User user) {
+
+		String userSecurityQuery = "SELECT usq FROM UserSecurityQuestions usq JOIN usq.questions q WHERE usq.userId = :userId AND usq.questions IN :questionIds";
+		Query q = em.createQuery(userSecurityQuery, UserSecurityQuestions.class);
+
+		q.setParameter("userId", user);
+
+		q.setParameter("questionIds", userSecurityQuestionsList);
+		
+		return q.getResultList();
+	}
+
+	/**
+	 * This method returns the user security questions for the given user 
+	 */
+	public List<UserSecurityQuestions> getUserSecurityQuestionsAnswers(User user) {
+
+		String userSecurityQuery = "SELECT usq FROM UserSecurityQuestions usq WHERE usq.userId = :userId";
+		Query q = em.createQuery(userSecurityQuery, UserSecurityQuestions.class);
+
+		q.setParameter("userId", user);
+
+		return q.getResultList();
+	}
+
+	/**
+	 * This method deletes the user security questions for the given user id
+	 */
+	public void deleteUserSecurityQuestions(User user) {
+		Query query = em
+				.createQuery("DELETE FROM UserSecurityQuestions WHERE userId = :userId");
+
+		query.setParameter("userId", user);
+
+		query.executeUpdate();
+	}
+
+	/**
+	 * This method updates the user security questions for the given user id
+	 */
+	public void updateUserSecurityQuestions(
+			UserSecurityQuestionsReq userSecurityQuestionsReq, Long userId,
+			Long institutionId) {
+
+		User user = new User();
+		user.setUserId(userId);
+
+		Query query = em
+				.createQuery("DELETE FROM UserSecurityQuestions WHERE userId = :userId");
+
+		query.setParameter("userId", user);
+
+		query.executeUpdate();
+
+		InstitutionMaster institutionMaster = new InstitutionMaster();
+		institutionMaster.setInstId(institutionId);
+
+		UserSecurityQuestions userSecurityQuestion = null;
+		SecurityQuestions securityQuestions = null;
+
+		for (UserSecurityQuestionReq userSecurityQuestionReq : userSecurityQuestionsReq
+				.getSecurityQuestions()) {
+
+			userSecurityQuestion = new UserSecurityQuestions();
+			userSecurityQuestion.setUserId(user);
+			userSecurityQuestion.setInstId(institutionMaster);
+			userSecurityQuestion.setAnswer(userSecurityQuestionReq
+					.getAnswer());
+
+			securityQuestions = new SecurityQuestions();
+
+			securityQuestions.setQuestionsId(userSecurityQuestionReq
+					.getId());
+			userSecurityQuestion.setQuestions(securityQuestions);
+
+			em.persist(userSecurityQuestion);
+		}
+	}
+
+	/**
+	 * This method save the role previleges 
+	 */
+	public void saveRolePrevileges(RolePrevilegeLinks rolePrevilegeLinks) {
+		em.persist(rolePrevilegeLinks);
+	}
+
+	/**
+	 * This method deletes the role previleges for the given role id
+	 */
+	public void deleteRolePrevileges(Roles role) {
+		Query query = em
+				.createQuery("DELETE FROM RolePrevilegeLinks WHERE roleId = :roleId");
+
+		query.setParameter("roleId", role);
+
+		query.executeUpdate();
+	}
+
+	/**
+	 * This method updates the role previleges for the given role id
+	 */
+	public void updateRolePrevileges(Long institutionId, Long roleId, List<Long> accessLinksList) {
+
+		Roles role = new Roles();
+		role.setRoleId(roleId);
+
+		Query query = em
+				.createQuery("DELETE FROM RolePrevilegeLinks WHERE roleId = :roleId");
+
+		query.setParameter("roleId", role);
+		query.executeUpdate();
+
+		InstitutionMaster institutionMaster = new InstitutionMaster();
+		institutionMaster.setInstId(institutionId);
+
+		AccessLinks accessLinks = null;
+		RolePrevilegeLinks rolePrevilegeLinks = null;
+
+		for (int i = 0; i < accessLinksList.size(); i++) {
+
+			accessLinks = new AccessLinks();
+			rolePrevilegeLinks = new RolePrevilegeLinks();
+
+			rolePrevilegeLinks.setRoleId(role);
+			rolePrevilegeLinks.setInstId(institutionMaster);
+
+			accessLinks.setAccessLinkId(accessLinksList.get(i));
+
+			rolePrevilegeLinks.setAccessLinkId(accessLinks);
+			rolePrevilegeLinks.setOrderNum(Long.valueOf(i + 1));
+
+			em.persist(rolePrevilegeLinks);
+
+		}
+	}
+	
+	/**
+	 * This method returns the role previleges for the given role id
+	 */
+	public List<RolePrevilegeLinks> getRolePrevileges(Roles role) {
+		CriteriaBuilder qb = em.getCriteriaBuilder();
+		CriteriaQuery<RolePrevilegeLinks> cq = qb.createQuery(RolePrevilegeLinks.class);
+		Root<RolePrevilegeLinks> rolePrevilegeLinks = cq.from(RolePrevilegeLinks.class);
+
+		cq.select(rolePrevilegeLinks);
+
+	    cq.where(qb.equal(rolePrevilegeLinks.get("roleId"), role));
+
+	    cq.orderBy(qb.asc(rolePrevilegeLinks.get("orderNum")));
+
+		return em.createQuery(cq).getResultList();
+	}
+
+	/**
+	 * This method save the userXFactor 
+	 */
+	public void saveUserXFactors(UserXfactors xfactors) {
+		em.persist(xfactors);
+	}
+
+	/**
+	 * This method shows the user is a remembered user for the given user id
+	 */
+	public Boolean isRememberedUser(User user, String xFactor) {
+		CriteriaBuilder qb = em.getCriteriaBuilder();
+		CriteriaQuery<Long> cq = qb.createQuery(Long.class);
+	    Root<UserXfactors> root  = cq.from(UserXfactors.class);			
+
+		List<Predicate> predicates = new ArrayList<Predicate>();
+
+        predicates.add(qb.equal(root.get("userId"), user));
+        predicates.add(qb.equal(root.get("xfactorValue"), xFactor));
+	        
+	    cq.select(qb.count(root));
+
+	    cq.where(predicates.toArray(new Predicate[]{}));
+	    
+		return (((Long) em.createQuery(cq).getSingleResult()).intValue() != 0);
+	
+	}
+	
+	public Boolean isUserSecurityQuestionsReset(User user) {
+		CriteriaBuilder qb = em.getCriteriaBuilder();
+		CriteriaQuery<Long> cq = qb.createQuery(Long.class);
+	    Root<UserSecurityQuestions> root  = cq.from(UserSecurityQuestions.class);			
+
+	    cq.select(qb.count(root));
+
+	    cq.where(qb.equal(root.get("userId"), user));
+	    
+		return (((Long) em.createQuery(cq).getSingleResult()).intValue() == 0);
+	
+	}
+
+	public void saveRolePrevileges(Roles role, List<RolePrevilegeLinks> rolePrevilegeLinksList) {
+		em.persist(role);
+		
+		for (RolePrevilegeLinks rolePrevilegeLinks : rolePrevilegeLinksList) {
+			
+			em.persist(rolePrevilegeLinks);
+
+		}
+	}
+
+	public void saveRolesPrevileges(List<Roles> roles, List<RolePrevilegeLinks> rolePrevilegeLinksList) {
+		
+		if(roles.size() != 0) {
+			Query query = em
+					.createQuery("DELETE FROM RolePrevilegeLinks WHERE roleId IN :roles");
+
+			query.setParameter("roles", roles);
+
+			query.executeUpdate();
+
+		}
+		
+		for (RolePrevilegeLinks rolePrevilegeLinks : rolePrevilegeLinksList) {
+			
+			em.persist(rolePrevilegeLinks);
+
+		}
+	}
+
+
+}
+	

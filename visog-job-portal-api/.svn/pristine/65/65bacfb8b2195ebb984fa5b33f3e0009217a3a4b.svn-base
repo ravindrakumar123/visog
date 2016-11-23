@@ -1,0 +1,27 @@
+package com.vsoftcorp.usermgmt.req;
+
+import java.util.List;
+
+
+public class UserOTPPreferencesReqs {
+
+	private List<Long> users;
+	private List<OTPPreferencesReq> preferences;
+
+	public List<OTPPreferencesReq> getPreferences() {
+		return preferences;
+	}
+
+	public void setPreferences(List<OTPPreferencesReq> preferences) {
+		this.preferences = preferences;
+	}
+
+	public List<Long> getUsers() {
+		return users;
+	}
+
+	public void setUsers(List<Long> users) {
+		this.users = users;
+	}
+
+}

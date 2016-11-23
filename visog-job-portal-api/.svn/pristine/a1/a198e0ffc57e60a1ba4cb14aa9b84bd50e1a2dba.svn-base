@@ -1,0 +1,196 @@
+package com.vsoftcorp.usermgmt.daoimpl;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
+import javax.inject.Singleton;
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+import javax.transaction.Transactional;
+
+import org.apache.log4j.Logger;
+
+import com.vsoftcorp.usermgmt.dao.AdminDao;
+import com.vsoftcorp.usermgmt.model.InstitutionMaster;
+import com.vsoftcorp.usermgmt.model.PasswordRules;
+import com.vsoftcorp.usermgmt.model.Roles;
+import com.vsoftcorp.usermgmt.model.User;
+import com.vsoftcorp.usermgmt.req.UserSearchReq;
+
+@Singleton
+@Transactional
+public class AdminDaoImpl implements AdminDao {
+
+	@PersistenceContext(unitName = "VsoftUserManagement")
+	private EntityManager em;
+
+	private static final Logger logger = Logger.getLogger(AdminDaoImpl.class);
+
+	/**
+	 * This method save the user and returns user id
+	 */
+	@Transactional
+	public void saveUser(User user) {
+		em.persist(user);
+	}
+
+	/**
+	 * This method updates the user 
+	 */
+	public void updateUser(User user) {
+		em.merge(user);
+	}
+
+	/**
+	 * This method deletes the user for the given user id
+	 */
+	public Boolean deleteUser(User user) {
+		
+		Query query = em.createQuery("DELETE FROM UserOTP WHERE userId = :userId");
+		query.setParameter("userId", user);
+		query.executeUpdate();
+		
+		query = em.createQuery("DELETE FROM UserSecurityQuestions WHERE userId = :userId");
+		query.setParameter("userId", user);
+		query.executeUpdate();
+		
+		query = em.createQuery("DELETE FROM UserXfactors WHERE userId = :userId");
+		query.setParameter("userId", user);
+		query.executeUpdate();
+		
+		query = em.createQuery("DELETE FROM UserPasswords WHERE userId = :userId");
+		query.setParameter("userId", user);
+		query.executeUpdate();
+		
+		query = em.createQuery("DELETE FROM UserOtpPreferences WHERE userId = :userId");
+		query.setParameter("userId", user);
+		query.executeUpdate();
+
+		query = em.createQuery("DELETE FROM User WHERE userId = :userId");
+		query.setParameter("userId", user.getUserId());
+		int deletionCount = query.executeUpdate();
+
+		return (deletionCount != 0);
+	}
+
+	/**
+	 * This method returns the user for the given user id
+	 */
+	public User getUser(Long userId) {
+
+		Query query = em.createQuery("SELECT u FROM User u JOIN u.role r JOIN u.instId i "
+									+ "WHERE u.userId = :userId");
+
+		query.setParameter("userId", userId);
+
+		return (User) query.getSingleResult();
+
+	}
+
+	/**
+	 * This method returns all the users 
+	 */
+	public List<User> getUsers(UserSearchReq userSearchReq) {
+		
+		CriteriaBuilder qb = em.getCriteriaBuilder();
+		CriteriaQuery<User> cq = qb.createQuery(User.class);
+		Root<User> user = cq.from(User.class);
+		Join<User, InstitutionMaster> details = user.join("instId");
+		
+		
+		List<Predicate> predicates = new ArrayList<Predicate>();
+
+		if(userSearchReq.getStatus() != null) {
+			
+			predicates.add(qb.equal(user.get("status"), userSearchReq.getStatus()));
+
+			if(userSearchReq.getDate() != null) {
+				
+				try {
+					
+					Date fromDate = new SimpleDateFormat("MM/dd/yyyy").parse(userSearchReq.getDate());
+					
+					Calendar calendar = Calendar.getInstance();
+					calendar.setTime(fromDate);
+					calendar.add(Calendar.DATE, 1);
+					calendar.add(Calendar.MILLISECOND, -1);
+					
+					Date toDate = calendar.getTime();
+					
+					predicates.add(qb.between(user.get("createdOn"), fromDate, toDate));
+				} catch (ParseException e) {
+					logger.error("Error in date pasrsing", e);
+				}
+			}
+
+		} else if(userSearchReq.getInstitutionMaster() != null) {
+			
+			predicates.add(qb.equal(user.get("instId"), userSearchReq.getInstitutionMaster()));
+			
+		} else if(userSearchReq.getRole() != null) {
+			
+			Roles roles = new Roles();
+			roles.setRoleId(userSearchReq.getRole());
+			predicates.add(qb.equal(user.get("role"), roles));
+
+		} else if(userSearchReq.getUserName() != null) {
+			
+			predicates.add(qb.equal(user.get("userName"), userSearchReq.getUserName()));
+
+		}
+
+		cq.select(user);
+
+		cq.where(predicates.toArray(new Predicate[] {}));
+
+		return em.createQuery(cq).getResultList();
+	}
+
+	/**
+	 * This method save the password rules 
+	 */
+	public void savePasswordRules(PasswordRules rules) {
+		em.persist(rules);
+	}
+
+	/**
+	 * This method updates the password rules data for the given rules
+	 */
+	public void updatePasswordRules(PasswordRules rules) {
+		em.merge(rules);
+	}
+	
+	/**
+	 * This method returns the password rules for the given role id
+	 */
+	public PasswordRules getPasswordRules(Roles role) {
+		try {
+			CriteriaBuilder qb = em.getCriteriaBuilder();
+			CriteriaQuery<PasswordRules> cq = qb.createQuery(PasswordRules.class);
+			Root<PasswordRules> passwordRules = cq.from(PasswordRules.class);
+
+			cq.select(passwordRules);
+
+			cq.where(qb.equal(passwordRules.get("roleId"), role));
+
+			return (PasswordRules) em.createQuery(cq).getSingleResult();
+		} catch (NoResultException nre) {
+			return null;
+		} catch (Exception e) {
+			throw e;
+		}
+
+	}
+
+}

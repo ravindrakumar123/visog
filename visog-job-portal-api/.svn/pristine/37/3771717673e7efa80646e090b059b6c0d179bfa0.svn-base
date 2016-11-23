@@ -1,0 +1,4 @@
+sso.url = http://192.168.2.127:8010/vsoft-sso-qa/v1/
+
+sso.field.emailId=email
+

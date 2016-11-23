@@ -1,0 +1,53 @@
+# Direct log messages to a log file
+
+# This property is for File appender which can be configurable for the file size.
+# If the file exceeds the range what we have configured, then one more file will be created.
+log4j.appender.file=org.apache.log4j.RollingFileAppender
+
+# This property is to create the new file per each day
+#log4j.appender.file=org.apache.log4j.DailyRollingFileAppender
+
+# This property is for file location in our server system
+# First time, the file will be created automatically, 
+# then onwards, the log data will be appended to this file.
+log4j.appender.file.File= ${catalina.base}/logs/usermgmt.log
+
+# This is for log file name pattern(This property is only for DailyRollingFileAppender)
+#log4j.appender.file.DatePattern='.'dd-MM-yyyy
+
+# This will be the maximum file size.
+log4j.appender.file.MaxFileSize=10MB
+
+# This is the maximum file to be created for logging.
+# If it exceeds, again from the first file, the logging data will be replaced 
+log4j.appender.file.MaxBackupIndex=99
+
+log4j.appender.file.layout=org.apache.log4j.PatternLayout
+
+# This describes the logging data date time format
+log4j.appender.file.layout.ConversionPattern=%d{dd-MM-yyyy HH:mm:ss, SSS} %5p %c{1}:%L - %m%n
+ 
+# Direct log messages to stdout
+log4j.appender.console=org.apache.log4j.ConsoleAppender
+#log4j.appender.console.Target=System.out
+log4j.appender.console.Target=SYSTEM_OUT
+log4j.appender.console.layout=org.apache.log4j.PatternLayout
+log4j.appender.console.layout.ConversionPattern=%d{dd-MM-yyyy HH:mm:ss, SSS} %5p %c{1}:%L - %m%n
+# Root logger option
+# Here the logger levels are described in ascending order
+# The greater than or equals loggers will be executed from the logger what we set 
+# TRACE(5000) < DEBUG(10000) < INFO(20000) < WARN(30000) < ERROR(40000)  < FATAL(50000)
+
+#log4j.category.org.springframework.jdbc.core = TRACE 
+
+#log4j.rootLogger = TRACE, file, console
+
+#log4j.rootLogger = DEBUG, file, console
+
+log4j.rootLogger = INFO, file, console
+
+#log4j.rootLogger = WARN, file, console
+
+#log4j.rootLogger = ERROR, file, console
+
+#log4j.rootLogger = FATAL, file, console

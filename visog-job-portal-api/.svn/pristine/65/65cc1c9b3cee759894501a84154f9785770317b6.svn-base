@@ -1,0 +1,27 @@
+package com.vsoftcorp.usermgmt.req;
+
+import java.util.List;
+
+public class UserSecurityQuestionsReq {
+	
+	private List<UserSecurityQuestionReq> securityQuestions;
+	private Boolean rememberMe;
+
+	public List<UserSecurityQuestionReq> getSecurityQuestions() {
+		return securityQuestions;
+	}
+
+	public void setSecurityQuestions(
+			List<UserSecurityQuestionReq> securityQuestions) {
+		this.securityQuestions = securityQuestions;
+	}
+
+	public Boolean getRememberMe() {
+		return rememberMe;
+	}
+
+	public void setRememberMe(Boolean rememberMe) {
+		this.rememberMe = rememberMe;
+	}
+
+}

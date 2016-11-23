@@ -1,0 +1,17 @@
+package com.vsoftcorp.usermgmt.req;
+
+import java.util.List;
+
+public class ListRolesPrevilegesReq {
+
+	private List<Long> accessLinks;
+
+	public List<Long> getAccessLinks() {
+		return accessLinks;
+	}
+
+	public void setAccessLinks(List<Long> accessLinks) {
+		this.accessLinks = accessLinks;
+	}
+	
+}

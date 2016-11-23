@@ -1,0 +1,30 @@
+package com.vsoftcorp.usermgmt.req;
+
+import java.util.List;
+
+public class RolesPrevilegesReq {
+
+	private Long roleId;
+	private String userType;
+	private List<String> accessLinks;
+
+	public List<String> getAccessLinks() {
+		return accessLinks;
+	}
+	public void setAccessLinks(List<String> accessLinks) {
+		this.accessLinks = accessLinks;
+	}
+	public Long getRoleId() {
+		return roleId;
+	}
+	public void setRoleId(Long roleId) {
+		this.roleId = roleId;
+	}
+	public String getUserType() {
+		return userType;
+	}
+	public void setUserType(String userType) {
+		this.userType = userType;
+	}
+	
+}

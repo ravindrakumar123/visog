@@ -1,0 +1,91 @@
+package com.vsoftcorp.usermgmt.model;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+
+@Entity
+@Table(name = "ROLES")
+public class Roles {
+	
+	@Id
+	@Column(name = "ROLE_ID")
+	@SequenceGenerator(name = "ROLES_SEQ", sequenceName = "ROLES_SEQ", allocationSize = 1)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "ROLES_SEQ")
+	private Long roleId;
+
+	@Column(name = "ROLE_NAME")
+	private String roleName;
+
+	@ManyToOne
+	@JoinColumn(name = "INST_ID")
+	private InstitutionMaster instId;
+	
+	@Column(name = "DESCRIPTION")
+	private String description;
+	
+	@Column(name = "USER_TYPE")
+	private String userType;
+	
+	@Column(name = "MULTIPLE_LOGIN")
+	private String multipleLogin;
+	
+	public String getRoleName() {
+		return roleName;
+	}
+
+	public void setRoleName(String roleName) {
+		this.roleName = roleName;
+	}
+
+	public InstitutionMaster getInstId() {
+		return instId;
+	}
+
+	public void setInstId(InstitutionMaster instId) {
+		this.instId = instId;
+	}
+
+	
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public String getMultipleLogin() {
+		return multipleLogin;
+	}
+
+	public void setMultipleLogin(String multipleLogin) {
+		this.multipleLogin = multipleLogin;
+	}
+
+	public Long getRoleId() {
+		return roleId;
+	}
+
+	public void setRoleId(Long roleId) {
+		this.roleId = roleId;
+	}
+
+	public String getUserType() {
+		return userType;
+	}
+
+	public void setUserType(String userType) {
+		this.userType = userType;
+	}
+
+
+	
+	
+}

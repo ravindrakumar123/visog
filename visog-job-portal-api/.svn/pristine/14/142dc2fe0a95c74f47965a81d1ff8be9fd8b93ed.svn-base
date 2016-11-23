@@ -1,0 +1,57 @@
+package com.vsoftcorp.usermgmt.service;
+
+import java.util.List;
+
+import com.vsoftcorp.usermgmt.req.RolePrevilegesNameReq;
+import com.vsoftcorp.usermgmt.req.RolesPrevilegesReq;
+import com.vsoftcorp.usermgmt.req.SecurityQuestionsReq;
+import com.vsoftcorp.usermgmt.req.UserSecurityQuestionsReq;
+import com.vsoftcorp.usermgmt.res.RolePrevilegesResponse;
+import com.vsoftcorp.usermgmt.res.RolesPrevilegesResponse;
+import com.vsoftcorp.usermgmt.res.SecurityQuestionsAnswersResponse;
+import com.vsoftcorp.usermgmt.res.SecurityQuestionsResponse;
+
+public interface SecurityService {
+
+	public Long saveSecurityQuestions(Long institutionId,
+			SecurityQuestionsReq securityQuestionsReq);
+
+	public List<List<SecurityQuestionsResponse>> getSecurityQuestions(Long institutionId);
+
+	public SecurityQuestionsResponse getSecurityQuestion(Long questionId);
+
+	public void updateSecurityQuestion(SecurityQuestionsReq securityQuestionsReq, Long questionId);
+
+	public Boolean deleteSecurityQuestion(Long questionId);
+
+	public List<SecurityQuestionsResponse> getRandomSecurityQuestions(Long userId);
+
+	public void saveUserSecurityQuestions(Long institutionId,
+										UserSecurityQuestionsReq userSecurityQuestionsReq, Long userId);
+
+	public void updateUserSecurityQuestions(UserSecurityQuestionsReq userSecurityQuestionsReq, 
+																Long userId, Long institutionId);
+
+	public String verifyUserSecurityQuestions(UserSecurityQuestionsReq userSecurityQuestionsReq, 
+																	Long userId, Long institutionId);
+	
+	public List<SecurityQuestionsAnswersResponse> getUserSecurityQuestionsAnswers(Long userId);
+
+	public void deleteUserSecurityQuestions(Long userId);
+
+	public void saveRolePrevileges(Long institutionId, Long roleId, List<Long> accessLinksList);
+
+	public void deleteRolePrevileges(Long roleId);
+
+	public void updateRolePrevileges(Long institutionId, Long roleId, List<Long> accessLinksList);
+
+	public List<RolePrevilegesResponse> getRolePrevileges(Long roleId);
+
+	public void saveRolePrevileges(Long institutionId, RolePrevilegesNameReq rolePrevilegesReq);
+	
+	public List<RolesPrevilegesResponse> getRolesPrevileges(Long institutionId);
+
+	public void saveRolesPrevileges(Long institutionId, List<RolesPrevilegesReq> rolesPrevilegesReqs);
+	
+
+}

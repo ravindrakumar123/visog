@@ -1,0 +1,10 @@
+package com.vsoftcorp.usermgmt.constants;
+
+public interface UserStatus {
+
+	String NOT_ENROLLED 	= "Not Enrolled";
+	String VERIFIED 		= "Verified";
+	String LOCKED 			= "Locked";
+	String DELETED 			= "Deleted";
+	
+}

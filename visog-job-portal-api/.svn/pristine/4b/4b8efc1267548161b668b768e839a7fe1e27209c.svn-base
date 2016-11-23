@@ -1,0 +1,31 @@
+package com.vsoftcorp.usermgmt.res;
+
+import java.util.List;
+
+
+public class RolesPrevilegesResponse {
+
+	private Long roleId;
+	private String roleName;
+	private List<RolePrevilegesResponse> accessLinks;
+	
+	public Long getRoleId() {
+		return roleId;
+	}
+	public void setRoleId(Long roleId) {
+		this.roleId = roleId;
+	}
+	public String getRoleName() {
+		return roleName;
+	}
+	public void setRoleName(String roleName) {
+		this.roleName = roleName;
+	}
+	public List<RolePrevilegesResponse> getAccessLinks() {
+		return accessLinks;
+	}
+	public void setAccessLinks(List<RolePrevilegesResponse> accessLinks) {
+		this.accessLinks = accessLinks;
+	}
+
+}

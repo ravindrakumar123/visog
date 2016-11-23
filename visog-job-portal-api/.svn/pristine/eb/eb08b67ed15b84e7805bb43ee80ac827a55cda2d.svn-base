@@ -1,0 +1,32 @@
+package com.vsoftcorp.usermgmt.service;
+
+import java.util.List;
+
+import com.vsoftcorp.usermgmt.req.PasswordRulesReq;
+import com.vsoftcorp.usermgmt.req.UserReq;
+import com.vsoftcorp.usermgmt.req.UserStatusReq;
+import com.vsoftcorp.usermgmt.res.AdminUserResponse;
+import com.vsoftcorp.usermgmt.res.PasswordRulesRes;
+
+
+public interface AdminService {
+	
+	public Long saveUser(Long institutionId, UserReq userReq);
+	
+	public void updateUser(UserReq userReq, Long userId);
+	
+	public Boolean deleteUser(Long userId);
+	
+	public AdminUserResponse getUser(Long userId);
+	
+	public List<AdminUserResponse> getUsers(Long institutionId);
+	
+	public Boolean saveOrUpdatePasswordRules(Long institutionId, Long roleId, PasswordRulesReq rulesReq);
+
+	public PasswordRulesRes getPasswordRules(Long institutionId, Long roleId);
+
+	public void updateUserStatus(Long institutionId, Long userId, UserStatusReq statusReq);
+	
+	public void resetPassword(Long userId);
+	
+}

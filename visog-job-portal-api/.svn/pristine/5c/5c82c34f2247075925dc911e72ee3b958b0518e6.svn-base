@@ -1,0 +1,27 @@
+package com.vsoftcorp.usermgmt.service;
+
+import java.util.List;
+
+import com.vsoftcorp.usermgmt.req.InstParamsReq;
+import com.vsoftcorp.usermgmt.req.InstituteReq;
+import com.vsoftcorp.usermgmt.res.InstParamRes;
+import com.vsoftcorp.usermgmt.res.InstituteRes;
+
+
+public interface SuperAdminService {
+	
+	public Long saveInstitute(InstituteReq instituteReq);
+	
+	public void updateInstitute(InstituteReq instituteReq, Long instId);
+	
+	public Boolean deleteInstitute(Long instId);
+	
+	public InstituteRes getInstitute(Long instId);
+	
+	public List<InstituteRes> getInstitutes();
+	
+	public void saveOrUpdateInstituteParams(Long institutionId, List<InstParamsReq> instParamsReqs);
+	
+	public List<InstParamRes> getInstituteParams(Long instId);
+	
+}

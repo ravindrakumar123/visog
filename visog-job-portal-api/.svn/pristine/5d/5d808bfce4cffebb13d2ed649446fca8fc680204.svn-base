@@ -1,0 +1,29 @@
+package com.vsoftcorp.usermgmt.dao;
+
+import java.util.List;
+
+import com.vsoftcorp.usermgmt.model.InstitutionMaster;
+import com.vsoftcorp.usermgmt.model.PasswordRules;
+import com.vsoftcorp.usermgmt.model.Roles;
+import com.vsoftcorp.usermgmt.model.User;
+
+
+public interface AdminDao {
+	
+	public Long saveUser(User user);
+
+	public Boolean deleteUser(Long userId);
+	
+	public User getUser(Long userId);
+	
+	public List<User> getUsers(InstitutionMaster institutionMaster);
+	
+	public void savePasswordRules(PasswordRules rules);
+
+	public void updatePasswordRules(PasswordRules rules);
+	
+	public PasswordRules getPasswordRules(Roles role);
+	
+	public void updateUser(User user);
+	
+}

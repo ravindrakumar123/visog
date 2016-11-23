@@ -1,0 +1,79 @@
+package com.vsoftcorp.usermgmt.model;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+
+@Entity
+@Table(name = "ROLE_PREVILEGE_LINKS")
+public class RolePrevilegeLinks {
+
+	@Id
+	@Column(name = "ROLE_PREVILEGE_LINK_ID")
+	@SequenceGenerator(name = "ROLE_PREVILEGE_LINKS_SEQ", sequenceName = "ROLE_PREVILEGE_LINKS_SEQ", allocationSize = 1)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "ROLE_PREVILEGE_LINKS_SEQ")
+	private Long rolePrevilegeLinkId;
+	
+	@ManyToOne
+	@JoinColumn(name = "INST_ID")
+	private InstitutionMaster instId;
+
+	@ManyToOne
+	@JoinColumn(name = "ACCESS_LINK_ID")
+	private AccessLinks accessLinkId;
+	
+	@ManyToOne
+	@JoinColumn(name = "ROLE_ID")
+	private Roles roleId;
+	
+	@Column(name = "ORDER_NUM")
+	private Long orderNum;
+
+	public InstitutionMaster getInstId() {
+		return instId;
+	}
+
+	public void setInstId(InstitutionMaster instId) {
+		this.instId = instId;
+	}
+
+	public AccessLinks getAccessLinkId() {
+		return accessLinkId;
+	}
+
+	public void setAccessLinkId(AccessLinks accessLinkId) {
+		this.accessLinkId = accessLinkId;
+	}
+
+	public Roles getRoleId() {
+		return roleId;
+	}
+
+	public void setRoleId(Roles roleId) {
+		this.roleId = roleId;
+	}
+
+	public Long getRolePrevilegeLinkId() {
+		return rolePrevilegeLinkId;
+	}
+
+	public void setRolePrevilegeLinkId(Long rolePrevilegeLinkId) {
+		this.rolePrevilegeLinkId = rolePrevilegeLinkId;
+	}
+
+	public Long getOrderNum() {
+		return orderNum;
+	}
+
+	public void setOrderNum(Long orderNum) {
+		this.orderNum = orderNum;
+	}
+
+	
+}

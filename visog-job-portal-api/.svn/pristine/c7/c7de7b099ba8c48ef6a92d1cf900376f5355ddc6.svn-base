@@ -1,0 +1,22 @@
+package com.vsoftcorp.usermgmt.res;
+
+
+public class InstParamRes {
+
+	private String paramName;
+	private String paramvalue;
+	
+	public String getParamName() {
+		return paramName;
+	}
+	public void setParamName(String paramName) {
+		this.paramName = paramName;
+	}
+	public String getParamvalue() {
+		return paramvalue;
+	}
+	public void setParamvalue(String paramvalue) {
+		this.paramvalue = paramvalue;
+	}
+	
+}

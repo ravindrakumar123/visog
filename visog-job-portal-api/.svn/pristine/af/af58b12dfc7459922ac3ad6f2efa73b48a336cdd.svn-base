@@ -1,0 +1,574 @@
+package com.vsoftcorp.usermgmt.serviceimpl;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+import org.apache.log4j.Logger;
+
+import com.vsoftcorp.usermgmt.constants.AppConstants;
+import com.vsoftcorp.usermgmt.dao.RoleDao;
+import com.vsoftcorp.usermgmt.dao.SecurityDao;
+import com.vsoftcorp.usermgmt.model.AccessLinks;
+import com.vsoftcorp.usermgmt.model.InstitutionMaster;
+import com.vsoftcorp.usermgmt.model.RolePrevilegeLinks;
+import com.vsoftcorp.usermgmt.model.Roles;
+import com.vsoftcorp.usermgmt.model.SecurityQuestions;
+import com.vsoftcorp.usermgmt.model.User;
+import com.vsoftcorp.usermgmt.model.UserSecurityQuestions;
+import com.vsoftcorp.usermgmt.model.UserXfactors;
+import com.vsoftcorp.usermgmt.req.RolePrevilegesNameReq;
+import com.vsoftcorp.usermgmt.req.RolesPrevilegesReq;
+import com.vsoftcorp.usermgmt.req.SecurityQuestionsReq;
+import com.vsoftcorp.usermgmt.req.UserSecurityQuestionReq;
+import com.vsoftcorp.usermgmt.req.UserSecurityQuestionsReq;
+import com.vsoftcorp.usermgmt.res.RolePrevilegesResponse;
+import com.vsoftcorp.usermgmt.res.RolesPrevilegesResponse;
+import com.vsoftcorp.usermgmt.res.SecurityQuestionsAnswersResponse;
+import com.vsoftcorp.usermgmt.res.SecurityQuestionsResponse;
+import com.vsoftcorp.usermgmt.service.SecurityService;
+import com.vsoftcorp.usermgmt.utils.RandomUtils;
+
+@Singleton
+public class SecurityServiceImpl implements SecurityService {
+
+	private static final Logger logger = Logger.getLogger(SecurityServiceImpl.class);
+
+	@Inject
+	SecurityDao dao;
+
+	@Inject
+	RoleDao roleDao;
+
+	/**
+	 *  This method save security questions by using institutionId and securityQuestionsReq
+	 */
+	public Long saveSecurityQuestions(Long institutionId,
+			SecurityQuestionsReq securityQuestionsReq) {
+
+		SecurityQuestions securityQuestion = new SecurityQuestions();
+		securityQuestion.setName(securityQuestionsReq.getName());
+		securityQuestion.setCategory(securityQuestionsReq.getCategory());
+
+		InstitutionMaster institutionMaster = new InstitutionMaster();
+		institutionMaster.setInstId(institutionId);
+		securityQuestion.setInstId(institutionMaster);
+		return dao.saveSecurityQuestions(securityQuestion);
+	}
+
+	/**
+	 * This method returns security questions by using institutionId 
+	 */
+	public List<List<SecurityQuestionsResponse>> getSecurityQuestions(
+			Long institutionId) {
+
+		InstitutionMaster institutionMaster = new InstitutionMaster();
+		institutionMaster.setInstId(institutionId);
+
+		List<SecurityQuestions> securityQuestions = dao
+				.getSecurityQuestions(institutionMaster);
+
+		List<SecurityQuestionsResponse> securityQuestionsDataResponseList = null;
+
+		SecurityQuestionsResponse securityQuestionsDataResponse = null;
+		
+		Map<String, List<SecurityQuestionsResponse>> categoryMap = new HashMap<>();
+		String category = null;
+		
+
+		for (SecurityQuestions securityQuestions1 : securityQuestions) {
+			
+			category = securityQuestions1.getCategory();
+			
+			if(categoryMap.get(category) == null) {
+				securityQuestionsDataResponseList = new ArrayList<>();
+				categoryMap.put(category, securityQuestionsDataResponseList);
+			} else {
+				securityQuestionsDataResponseList = categoryMap.get(category);
+			}
+			
+			securityQuestionsDataResponse = new SecurityQuestionsResponse();
+			securityQuestionsDataResponse.setName(securityQuestions1.getName());
+			securityQuestionsDataResponse.setCategory(category);
+			securityQuestionsDataResponse.setId(securityQuestions1.getQuestionsId());
+
+			securityQuestionsDataResponseList.add(securityQuestionsDataResponse);
+		}
+
+		List<List<SecurityQuestionsResponse>> list = new ArrayList<>();
+		
+		for(String categories : categoryMap.keySet()) {
+			list.add(categoryMap.get(categories));
+		}
+		
+		return list;
+		
+	}
+
+	/**
+	 * This method returns security question by using question id
+	 */
+	public SecurityQuestionsResponse getSecurityQuestion(Long questionId) {
+		SecurityQuestions securityQuestion = dao
+				.getSecurityQuestion(questionId);
+
+		SecurityQuestionsResponse securityQuestionsDataResponse = new SecurityQuestionsResponse();
+		securityQuestionsDataResponse.setId(securityQuestion
+				.getQuestionsId());
+		securityQuestionsDataResponse.setName(securityQuestion.getName());
+		securityQuestionsDataResponse.setCategory(securityQuestion
+				.getCategory());
+		return securityQuestionsDataResponse;
+
+	}
+
+	/**
+	 * This method updates security question by using question id
+	 */
+	public void updateSecurityQuestion(
+			SecurityQuestionsReq securityQuestionsReq, Long questionId) {
+		
+		SecurityQuestions securityQuestions = dao
+				.getSecurityQuestion(questionId);
+		
+		securityQuestions.setName(securityQuestionsReq.getName());
+		securityQuestions.setCategory(securityQuestionsReq.getCategory());
+		
+		dao.updateSecurityQuestion(securityQuestions);
+
+	}
+
+	/**
+	 * This method deletes security question by using question id
+	 */
+	public Boolean deleteSecurityQuestion(Long questionId) {
+		return dao.deleteSecurityQuestion(questionId);
+	}
+
+	/**
+	 * This method returns security questions by using user id
+	 */
+	public List<SecurityQuestionsResponse> getRandomSecurityQuestions(
+			Long userId, Integer randomCount) {
+
+		User user = new User();
+		user.setUserId(userId);
+
+		List<UserSecurityQuestions> userSecurityQuestions = dao.getUserSecurityQuestions(user);
+
+		Collections.shuffle(userSecurityQuestions);
+
+		List<SecurityQuestionsResponse> securityQuestionsDataResponseList = new ArrayList<>();
+		SecurityQuestionsResponse securityQuestionsDataResponse = null;
+		SecurityQuestions questions = null;
+
+		for (int i = 0; i < randomCount; i++) {
+			securityQuestionsDataResponse = new SecurityQuestionsResponse();
+			questions = userSecurityQuestions.get(i).getQuestions();
+			securityQuestionsDataResponse.setId(questions.getQuestionsId());
+			securityQuestionsDataResponse.setName(questions.getName());
+			securityQuestionsDataResponse.setCategory(questions.getCategory());
+			securityQuestionsDataResponseList
+					.add(securityQuestionsDataResponse);
+
+		}
+
+		return securityQuestionsDataResponseList;
+	}
+
+	/**
+	 * This method save user security questions by using institutionId, userSecurityQuestionsReq and user id
+	 */
+	public void saveUserSecurityQuestions(Long institutionId,
+			UserSecurityQuestionsReq userSecurityQuestionsReq, Long userId) {
+
+		User user = new User();
+		user.setUserId(userId);
+
+		InstitutionMaster institutionMaster = new InstitutionMaster();
+		institutionMaster.setInstId(institutionId);
+
+		UserSecurityQuestions userSecurityQuestion 	= null;
+		SecurityQuestions securityQuestions	 		= null;
+		List<UserSecurityQuestions> questions		= new ArrayList<>();
+
+		for (UserSecurityQuestionReq userSecurityQuestionReq : userSecurityQuestionsReq
+				.getSecurityQuestions()) {
+
+			userSecurityQuestion = new UserSecurityQuestions();
+			userSecurityQuestion.setUserId(user);
+			userSecurityQuestion.setInstId(institutionMaster);
+			userSecurityQuestion.setAnswer(userSecurityQuestionReq.getAnswer());
+
+			securityQuestions = new SecurityQuestions();
+
+			securityQuestions.setQuestionsId(userSecurityQuestionReq
+					.getId());
+			userSecurityQuestion.setQuestions(securityQuestions);
+			
+			questions.add(userSecurityQuestion);
+
+		}
+
+		dao.saveUserSecurityQuestions(questions);
+
+	}
+
+	/**
+	 * This method updates user security questions by using user id
+	 */
+	public void updateUserSecurityQuestions(
+			UserSecurityQuestionsReq userSecurityQuestionsReq, Long userId,
+			Long institutionId) {
+		
+		dao.updateUserSecurityQuestions(userSecurityQuestionsReq, userId,
+				institutionId);
+	}
+
+	/**
+	 * This method verifies user security questions by using user id,institutionId and userSecurityQuestionsReq
+	 */
+	public String verifyUserSecurityQuestions(UserSecurityQuestionsReq userSecurityQuestionsReq, 
+											Long userId, Long institutionId) {
+		User user = new User();
+		user.setUserId(userId);
+
+		List<SecurityQuestions> reqUserSecurityQuestionsList = new ArrayList<>();
+
+		Map<Long, String> reqQuestionAnswerMap = new HashMap<>();
+
+		SecurityQuestions sc = null;
+
+		for (UserSecurityQuestionReq userSecurityQuestionReq : userSecurityQuestionsReq
+				.getSecurityQuestions()) {
+
+			sc = new SecurityQuestions();
+			sc.setQuestionsId(userSecurityQuestionReq.getId());
+			reqUserSecurityQuestionsList.add(sc);
+
+			reqQuestionAnswerMap.put(sc.getQuestionsId(),
+					userSecurityQuestionReq.getAnswer());
+
+		}
+
+		List<UserSecurityQuestions> dbUserSecurityQuestions = dao
+										.getUserSecurityQuestions(reqUserSecurityQuestionsList, user);
+
+		for (UserSecurityQuestions userSecurityQuestions : dbUserSecurityQuestions) {
+
+			if (reqQuestionAnswerMap.get(
+					userSecurityQuestions.getQuestions().getQuestionsId())
+					.equals(userSecurityQuestions.getAnswer())) {
+
+				continue;
+
+			} else {
+
+				return null;
+
+			}
+		}
+		
+		if(userSecurityQuestionsReq.getRememberMe()) {
+			UserXfactors xfactors = new UserXfactors();
+			
+			InstitutionMaster institutionMaster = new InstitutionMaster();
+			institutionMaster.setInstId(institutionId);
+			xfactors.setInstId(institutionMaster);
+			
+			xfactors.setUserId(user);
+			String xFactorValue = RandomUtils.getRandomAlphaNumericString(20);
+			xfactors.setXfactorValue(xFactorValue);
+			
+			dao.saveUserXFactors(xfactors);
+
+			return xFactorValue;
+		} else {
+			return "VERIFIED";
+		}
+	}
+
+	/**
+	 * This method returns user saved security questions and answers 
+	 */
+	public List<SecurityQuestionsAnswersResponse> getUserSecurityQuestionsAnswers(Long userId) {
+		
+		User user = new User();
+		user.setUserId(userId);
+		List<UserSecurityQuestions> dbUserSecurityQuestions = dao.getUserSecurityQuestionsAnswers(user);
+		
+		List<SecurityQuestionsAnswersResponse> answersResponses = new ArrayList<>();
+		
+		SecurityQuestionsAnswersResponse answersResponse = null;
+		SecurityQuestions questions = null;
+		
+		for(UserSecurityQuestions userSecurityQuestions : dbUserSecurityQuestions) {
+			
+			answersResponse = new SecurityQuestionsAnswersResponse();
+			questions		= userSecurityQuestions.getQuestions();
+			
+			answersResponse.setAnswer(userSecurityQuestions.getAnswer());
+			answersResponse.setCategory(questions.getCategory());
+			answersResponse.setId(questions.getQuestionsId());
+			answersResponse.setName(questions.getName());
+			
+			answersResponses.add(answersResponse);
+		}
+		
+		return answersResponses;
+	}
+	
+	/**
+	 * This method deletes user security questions by using user id
+	 */
+	public void deleteUserSecurityQuestions(Long userId) {
+
+		User user = new User();
+		user.setUserId(userId);
+
+		dao.deleteUserSecurityQuestions(user);
+
+	}
+
+	/**
+	 * This method save role previleges for the given institution
+	 */
+	public void saveRolePrevileges(Long institutionId, Long roleId, List<Long> accessLinksList) {
+
+		RolePrevilegeLinks rolePrevilegeLinks = null;
+
+		Roles roles = new Roles();
+		roles.setRoleId(roleId);
+
+		InstitutionMaster institutionMaster = new InstitutionMaster();
+		institutionMaster.setInstId(institutionId);
+
+		AccessLinks accessLinks = null;
+		
+		for (int i = 0; i < accessLinksList.size(); i++) {
+			accessLinks = new AccessLinks();
+
+			rolePrevilegeLinks = new RolePrevilegeLinks();
+
+			rolePrevilegeLinks.setRoleId(roles);
+			rolePrevilegeLinks.setInstId(institutionMaster);
+
+			accessLinks.setAccessLinkId(accessLinksList.get(i));
+
+			rolePrevilegeLinks.setAccessLinkId(accessLinks);
+			rolePrevilegeLinks.setOrderNum(Long.valueOf(i + 1));
+
+			dao.saveRolePrevileges(rolePrevilegeLinks);
+		}
+
+	}
+
+	/**
+	 * This method deletes role previleges by using role id
+	 */
+	public void deleteRolePrevileges(Long roleId) {
+
+		Roles role = new Roles();
+		role.setRoleId(roleId);
+
+		dao.deleteRolePrevileges(role);
+	}
+
+	/**
+	 * This method updates role previleges by using institution id
+	 */
+	public void updateRolePrevileges(Long institutionId, Long roleId, List<Long> accessLinksList) {
+
+		dao.updateRolePrevileges(institutionId, roleId, accessLinksList);
+
+	}
+
+	/**
+	 * This method returns role previleges by using role id
+	 */
+	public List<RolePrevilegesResponse> getRolePrevileges(Long roleId) {
+
+		Roles role = new Roles();
+		role.setRoleId(roleId);
+
+		List<RolePrevilegeLinks> dbRolePrevileges = dao.getRolePrevileges(role);
+
+		List<RolePrevilegesResponse> rolePrevilegesResponseList = new ArrayList<>();
+		RolePrevilegesResponse rolePrevilegesResponse = null;
+		AccessLinks accessLinks = null;
+
+		for (RolePrevilegeLinks rolePrevilegeLinksLoop : dbRolePrevileges) {
+
+			rolePrevilegesResponse = new RolePrevilegesResponse();
+
+			accessLinks = rolePrevilegeLinksLoop.getAccessLinkId();
+
+			rolePrevilegesResponse.setId(accessLinks.getAccessLinkId());
+			rolePrevilegesResponse.setDescription(accessLinks.getDescription());
+			rolePrevilegesResponse.setDisplayName(accessLinks.getDisplayName());
+			rolePrevilegesResponse.setName(accessLinks.getName());
+
+			rolePrevilegesResponse.setIsOtpReq(AppConstants.TRUE_CHAR
+					.equals(accessLinks.getIsOtpReq()));
+			
+			if (rolePrevilegeLinksLoop.getAccessLinkId().getParentId() != null) {
+				rolePrevilegesResponse.setParent(accessLinks.getParentId()
+						.getName());
+			}
+
+			rolePrevilegesResponseList.add(rolePrevilegesResponse);
+		}
+
+		return rolePrevilegesResponseList;
+	}
+
+	/**
+	 * Saves Role previleges
+	 */
+	public void saveRolePrevileges(Long institutionId, RolePrevilegesNameReq rolePrevilegesReq) {
+		
+		Roles roles = new Roles();
+
+		roles.setRoleName(rolePrevilegesReq.getRoleName());
+		roles.setDescription(rolePrevilegesReq.getDescription());
+		
+		roles.setMultipleLogin((rolePrevilegesReq.getMultipleLogin() == null) ? 
+					AppConstants.FALSE_CHAR : (rolePrevilegesReq.getMultipleLogin() ? 
+									AppConstants.TRUE_CHAR : AppConstants.FALSE_CHAR));
+
+		InstitutionMaster institutionMaster = new InstitutionMaster();
+		institutionMaster.setInstId(institutionId);
+		roles.setInstId(institutionMaster);
+
+		RolePrevilegeLinks rolePrevilegeLinks = null;
+
+		AccessLinks accessLinks = null;
+		
+		List<String> accessLinksList = rolePrevilegesReq.getAccessLinks();
+		List<RolePrevilegeLinks> rolePrevilegeLinksList = new ArrayList<>();
+		
+		Long i = 0l;
+		for(String accessLink : accessLinksList) {
+			i++;
+			accessLinks = roleDao.getAccessLink(institutionMaster, accessLink);
+			rolePrevilegeLinks = new RolePrevilegeLinks();
+
+			rolePrevilegeLinks.setRoleId(roles);
+			rolePrevilegeLinks.setInstId(institutionMaster);
+
+			rolePrevilegeLinks.setAccessLinkId(accessLinks);
+			rolePrevilegeLinks.setOrderNum(i);
+			
+			rolePrevilegeLinksList.add(rolePrevilegeLinks);
+			
+		}
+		
+		dao.saveRolePrevileges(roles, rolePrevilegeLinksList);
+
+	}
+
+	/**
+	 * This method returns list of roles with their previleges
+	 */
+	public List<RolesPrevilegesResponse> getRolesPrevileges(Long institutionId) {
+		
+		InstitutionMaster institutionMaster = new InstitutionMaster();
+		institutionMaster.setInstId(institutionId);
+
+		List<Roles> roles 											= roleDao.getRoles(institutionMaster);
+		List<RolesPrevilegesResponse> rolesPrevilegesResponseList 	= new ArrayList<>();
+		RolesPrevilegesResponse rolesPrevilegesResponse 			= null;
+		List<RolePrevilegeLinks> dbRolePrevileges 					= null;
+		List<RolePrevilegesResponse> rolePrevilegesResponseList 	= null;
+		RolePrevilegesResponse rolePrevilegesResponse 				= null;
+		AccessLinks accessLinks 									= null;
+		
+		for(Roles role : roles) {
+			
+			dbRolePrevileges 			= dao.getRolePrevileges(role);
+			rolesPrevilegesResponse 	= new RolesPrevilegesResponse();
+			rolePrevilegesResponseList 	= new ArrayList<>();
+			
+			for (RolePrevilegeLinks rolePrevilegeLinksLoop : dbRolePrevileges) {
+
+				rolePrevilegesResponse = new RolePrevilegesResponse();
+
+				accessLinks = rolePrevilegeLinksLoop.getAccessLinkId();
+
+				rolePrevilegesResponse.setId(accessLinks.getAccessLinkId());
+				rolePrevilegesResponse.setDescription(accessLinks.getDescription());
+				rolePrevilegesResponse.setDisplayName(accessLinks.getDisplayName());
+				rolePrevilegesResponse.setName(accessLinks.getName());
+
+				rolePrevilegesResponse.setIsOtpReq(AppConstants.TRUE_CHAR
+						.equals(accessLinks.getIsOtpReq()));
+				
+				if (rolePrevilegeLinksLoop.getAccessLinkId().getParentId() != null) {
+					rolePrevilegesResponse.setParent(accessLinks.getParentId()
+							.getName());
+				}
+
+				rolePrevilegesResponseList.add(rolePrevilegesResponse);
+			}
+			
+			rolesPrevilegesResponse.setRoleId(role.getRoleId());
+			rolesPrevilegesResponse.setRoleName(role.getRoleName());
+			rolesPrevilegesResponse.setAccessLinks(rolePrevilegesResponseList);
+			
+			rolesPrevilegesResponseList.add(rolesPrevilegesResponse);
+		}
+
+
+		return rolesPrevilegesResponseList;
+	}
+
+	/**
+	 * Saves Role previleges list
+	 */
+	public void saveRolesPrevileges(Long institutionId, List<RolesPrevilegesReq> rolesPrevilegesReqs) {
+		
+		InstitutionMaster institutionMaster = new InstitutionMaster();
+		institutionMaster.setInstId(institutionId);
+
+		RolePrevilegeLinks rolePrevilegeLinks 			= null;
+		Roles roles 									= null;
+		AccessLinks accessLinks 						= null;
+		List<String> accessLinksList 					= null;
+		List<RolePrevilegeLinks> rolePrevilegeLinksList = null;
+		List<Roles> rolesList 							= new ArrayList<>();
+		rolePrevilegeLinksList 							= new ArrayList<>();
+		
+
+		for(RolesPrevilegesReq rolePrevilegesReq : rolesPrevilegesReqs) {
+			roles = roleDao.getRole(rolePrevilegesReq.getRoleId());
+			accessLinksList = rolePrevilegesReq.getAccessLinks();
+			
+			Long i = 0l;
+			for(String accessLink : accessLinksList) {
+				i++;
+				accessLinks = roleDao.getAccessLink(institutionMaster, accessLink);
+				rolePrevilegeLinks = new RolePrevilegeLinks();
+
+				rolePrevilegeLinks.setRoleId(roles);
+				rolePrevilegeLinks.setInstId(institutionMaster);
+
+				rolePrevilegeLinks.setAccessLinkId(accessLinks);
+				rolePrevilegeLinks.setOrderNum(i);
+				
+				rolePrevilegeLinksList.add(rolePrevilegeLinks);
+				
+			}
+			rolesList.add(roles);
+		}
+		dao.deleteRolesPrevileges(rolesList, rolePrevilegeLinksList);
+
+	}
+
+	
+	
+}

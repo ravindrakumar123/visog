@@ -1,0 +1,49 @@
+package com.vsoftcorp.usermgmt.dao;
+
+import java.util.Date;
+import java.util.List;
+
+import com.vsoftcorp.usermgmt.model.AccessLinks;
+import com.vsoftcorp.usermgmt.model.InstitutionMaster;
+import com.vsoftcorp.usermgmt.model.LoginMaster;
+import com.vsoftcorp.usermgmt.model.User;
+import com.vsoftcorp.usermgmt.model.UserOTP;
+import com.vsoftcorp.usermgmt.model.UserOtpPreferences;
+import com.vsoftcorp.usermgmt.model.UserPasswords;
+import com.vsoftcorp.usermgmt.req.OTPReq;
+
+
+public interface UserDao {
+	
+	public Long saveOTP(UserOTP userOTP);
+
+	public UserOTP getOTPObject(OTPReq otpReq);
+
+	public void updateOTPAsVerified(UserOTP userOTP);
+
+	public User getUserByUserName(InstitutionMaster institutionMaster, String userName);
+
+	public Long saveLoginMaster(LoginMaster loginMaster);
+
+	public LoginMaster getUserLastLogin(User user);
+
+	public Integer getLoginAttempsCountAFterTheGivenDate(User user, Date createdOn);
+
+	public Integer getLoginAttempsCount(User user);
+
+	public void updateUserPassword(UserPasswords userPasswords);
+
+	public List<UserPasswords> getUserLastPasswords(User user, Integer checkLastPwds);
+
+	public LoginMaster saveLoginMaster(Long loginSessionId);
+
+	public void updateLoginMaster(LoginMaster loginMaster);
+	
+	public LoginMaster getLoginMaster(Long loginSessionId);
+
+	public User getUserByUserId(String userId);
+
+	public UserOtpPreferences getUserOtpPreferences(User user, AccessLinks accessLinks);
+
+
+}

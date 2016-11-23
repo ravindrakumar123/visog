@@ -1,0 +1,79 @@
+package com.vsoftcorp.usermgmt.model;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+
+@Entity
+@Table(name = "USER_SECURITY_QUESTIONS")
+public class UserSecurityQuestions {
+
+	@Id
+	@Column(name = "USER_SECURITY_QUESTION_ID")
+	@SequenceGenerator(name = "USER_SECURITY_QUESTIONS_SEQ", sequenceName = "USER_SECURITY_QUESTIONS_SEQ", allocationSize = 1)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "USER_SECURITY_QUESTIONS_SEQ")
+	private Long userSecurityQuestionId;
+
+	@ManyToOne
+	@JoinColumn(name = "USER_ID")
+	private User userId;
+	
+	@ManyToOne
+	@JoinColumn(name = "QUESTIONS_ID")
+	private SecurityQuestions questions;
+	
+	@Column(name = "ANSWER")
+	private String answer;
+	
+	@ManyToOne
+	@JoinColumn(name = "INST_ID")
+	private InstitutionMaster instId;
+
+	public User getUserId() {
+		return userId;
+	}
+
+	public void setUserId(User userId) {
+		this.userId = userId;
+	}
+
+	public SecurityQuestions getQuestions() {
+		return questions;
+	}
+
+	public void setQuestions(SecurityQuestions questions) {
+		this.questions = questions;
+	}
+
+
+	public String getAnswer() {
+		return answer;
+	}
+
+	public void setAnswer(String answer) {
+		this.answer = answer;
+	}
+
+	public InstitutionMaster getInstId() {
+		return instId;
+	}
+
+	public void setInstId(InstitutionMaster instId) {
+		this.instId = instId;
+	}
+
+	public Long getUserSecurityQuestionId() {
+		return userSecurityQuestionId;
+	}
+
+	public void setUserSecurityQuestionId(Long userSecurityQuestionId) {
+		this.userSecurityQuestionId = userSecurityQuestionId;
+	}
+
+}

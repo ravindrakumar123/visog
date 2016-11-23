@@ -1,0 +1,4 @@
+sso.url = http://localhost:8080/vsoft-sso/v1/
+
+sso.field.emailId=email
+

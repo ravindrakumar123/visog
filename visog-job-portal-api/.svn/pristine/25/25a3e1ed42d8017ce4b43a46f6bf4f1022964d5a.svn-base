@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://xmlns.jcp.org/xml/ns/javaee" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd" version="3.1">
+
+<display-name>Vsoft User Management</display-name>
+
+	<listener>
+		<listener-class>com.vsoftcorp.usermgmt.servlet.ContextListener</listener-class>
+	</listener>
+  <listener>
+    <listener-class>org.apache.shiro.web.env.EnvironmentLoaderListener</listener-class>
+  </listener>
+
+<!-- CDI / Weld -->
+	<resource-env-ref>
+		<resource-env-ref-name>BeanManager</resource-env-ref-name>
+		<resource-env-ref-type>javax.enterprise.inject.spi.BeanManager</resource-env-ref-type>
+	</resource-env-ref>
+<!-- 	<listener>
+		<listener-class>org.jboss.weld.environment.servlet.Listener</listener-class>
+	</listener> -->
+
+<!-- REST api configuration -->
+ <!-- this should be the same URL pattern as the servlet-mapping property -->
+	<context-param>
+		<param-name>resteasy.servlet.mapping.prefix</param-name>
+		<param-value>/</param-value>
+	</context-param>
+	
+	<context-param>
+			<param-name>javax.ws.rs.Application</param-name>
+			<param-value>com.vsoftcorp.usermgmt.rest.UserManagementRestApplication</param-value>
+	</context-param>
+	
+	<listener>
+		<listener-class>org.jboss.resteasy.plugins.server.servlet.ResteasyBootstrap</listener-class>
+	</listener>
+	
+	<servlet>
+		<servlet-name>resteasy-servlet</servlet-name>
+		<servlet-class>
+			org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher
+         </servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>resteasy-servlet</servlet-name>
+		<url-pattern>/*</url-pattern>
+	</servlet-mapping>
+	
+	<persistence-context-ref>
+		<persistence-context-ref-name>persistence/em</persistence-context-ref-name>
+		<persistence-unit-name>VsoftUserManagement</persistence-unit-name>
+	</persistence-context-ref>
+	
+	<!-- Start CORS Filter -->
+	
+	<filter>
+	  <filter-name>CorsFilter</filter-name>
+	  <filter-class>org.apache.catalina.filters.CorsFilter</filter-class>
+	  <init-param>
+	    <param-name>cors.allowed.origins</param-name>
+	    <param-value>*</param-value>
+	  </init-param>
+	  <init-param>
+	    <param-name>cors.allowed.methods</param-name>
+	    <param-value>GET,POST,HEAD,OPTIONS,PUT,DELETE</param-value>
+	  </init-param>
+	  <init-param>
+	    <param-name>cors.allowed.headers</param-name>
+	    <param-value>Content-Type,X-Requested-With,accept,Origin,Access-Control-Request-Method,Access-Control-Request-Headers</param-value>
+	  </init-param>
+	  <init-param>
+	    <param-name>cors.exposed.headers</param-name>
+	    <param-value>Access-Control-Allow-Origin,Access-Control-Allow-Credentials</param-value>
+	  </init-param>
+	  <init-param>
+	    <param-name>cors.support.credentials</param-name>
+	    <param-value>true</param-value>
+	  </init-param>
+	  <init-param>
+	    <param-name>cors.preflight.maxage</param-name>
+	    <param-value>10</param-value>
+	  </init-param>
+	</filter>
+	<filter-mapping>
+	  <filter-name>CorsFilter</filter-name>
+	  <url-pattern>/*</url-pattern>
+	</filter-mapping>	
+	
+	<!-- End CORS Filter -->
+	
+	<!-- Start SHIRO Filter -->
+	
+  <filter>
+    <filter-name>ShiroFilter</filter-name>
+    <filter-class>org.apache.shiro.web.servlet.ShiroFilter</filter-class>
+  </filter>
+  <filter-mapping>
+    <filter-name>ShiroFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+    <dispatcher>REQUEST</dispatcher>
+    <dispatcher>FORWARD</dispatcher>
+    <dispatcher>INCLUDE</dispatcher>
+    <dispatcher>ERROR</dispatcher>
+  </filter-mapping>
+  
+	<!-- End SHIRO Filter -->
+	
+	
+</web-app>

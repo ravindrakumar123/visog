@@ -1,0 +1,7 @@
+package com.vsoftcorp.usermgmt.res;
+
+
+
+public interface LoginRes {
+
+}

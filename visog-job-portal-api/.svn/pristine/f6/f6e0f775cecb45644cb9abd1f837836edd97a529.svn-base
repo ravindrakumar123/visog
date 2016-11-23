@@ -1,0 +1,60 @@
+package com.vsoftcorp.usermgmt.req;
+
+import com.vsoftcorp.usermgmt.model.InstitutionMaster;
+
+
+public class UserSearchReq {
+
+	private String userName;
+	private String routingNumber;
+	private Long role;
+	private String status;
+	private String fromDate;
+	private String toDate;
+	private InstitutionMaster institutionMaster;
+	
+	public String getUserName() {
+		return userName;
+	}
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
+	public String getRoutingNumber() {
+		return routingNumber;
+	}
+	public void setRoutingNumber(String routingNumber) {
+		this.routingNumber = routingNumber;
+	}
+	public String getStatus() {
+		return status;
+	}
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+	public String getFromDate() {
+		return fromDate;
+	}
+	public void setFromDate(String fromDate) {
+		this.fromDate = fromDate;
+	}
+	public String getToDate() {
+		return toDate;
+	}
+	public void setToDate(String toDate) {
+		this.toDate = toDate;
+	}
+	public Long getRole() {
+		return role;
+	}
+	public void setRole(Long role) {
+		this.role = role;
+	}
+	public InstitutionMaster getInstitutionMaster() {
+		return institutionMaster;
+	}
+	public void setInstitutionMaster(InstitutionMaster institutionMaster) {
+		this.institutionMaster = institutionMaster;
+	}
+	
+}

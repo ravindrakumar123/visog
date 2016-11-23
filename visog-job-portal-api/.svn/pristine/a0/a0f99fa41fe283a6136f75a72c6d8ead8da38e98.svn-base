@@ -1,0 +1,65 @@
+package com.vsoftcorp.usermgmt.model;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+
+@Entity
+@Table(name = "SECURITY_QUESTIONS")
+public class SecurityQuestions {
+
+	@Id
+	@Column(name = "QUESTIONS_ID")
+	@SequenceGenerator(name = "SECURITY_QUESTIONS_SEQ", sequenceName = "SECURITY_QUESTIONS_SEQ", allocationSize = 1)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SECURITY_QUESTIONS_SEQ")
+	private Long questionsId;
+
+	@Column(name = "NAME")
+	private String name;
+
+	@Column(name = "CATEGORY")
+	private String category;
+
+	@ManyToOne
+	@JoinColumn(name = "INST_ID")
+	private InstitutionMaster instId;
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getCategory() {
+		return category;
+	}
+
+	public void setCategory(String category) {
+		this.category = category;
+	}
+
+	public InstitutionMaster getInstId() {
+		return instId;
+	}
+
+	public void setInstId(InstitutionMaster instId) {
+		this.instId = instId;
+	}
+
+	public Long getQuestionsId() {
+		return questionsId;
+	}
+
+	public void setQuestionsId(Long questionsId) {
+		this.questionsId = questionsId;
+	}
+
+}

@@ -1,0 +1,36 @@
+package com.vsoftcorp.usermgmt.req;
+
+
+public class OTPPreferencesReq {
+
+	private String accessLinkId;
+
+	private Boolean otp;
+	
+	private String otpMedia;
+
+	public Boolean getOtp() {
+		return otp;
+	}
+
+	public void setOtp(Boolean otp) {
+		this.otp = otp;
+	}
+
+	public String getOtpMedia() {
+		return otpMedia;
+	}
+
+	public void setOtpMedia(String otpMedia) {
+		this.otpMedia = otpMedia;
+	}
+
+	public String getAccessLinkId() {
+		return accessLinkId;
+	}
+
+	public void setAccessLinkId(String accessLinkId) {
+		this.accessLinkId = accessLinkId;
+	}
+
+}

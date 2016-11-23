@@ -1,0 +1,26 @@
+DATA_SOURCE_NAME = usermgmtDB
+
+APP_DATE_FORMAT = MM-dd-yyyy
+	
+APP_DATETIME_FORMAT = MM-dd-yyyy HH:mm
+	
+OTP_TIMEOUT_PERIOD_IN_MINUTES = 15
+	
+UNKNOWN_ERROR_MSG = Unknown error occurred
+
+SHIRO_AUTH_QUERY = SELECT password FROM umgmt_users WHERE USER_NAME= ?
+	
+ALERTS_URL = http://localhost:8090/vsoft-alerts/services/rest/handleRequest
+
+ALERTS_EMAIL_SUBJECT = User Management Automatic Mail
+
+WEBSITE_ADDR = www.cacu.com
+
+HS256_KEY = uyIIdLu8CmMWlLhls6oZyXoaPk8
+
+IS_SESSION_REQUIRED = true
+
+COOKIE_DOMAIN = 
+
+ALERT_BANK_ID = 1
+

@@ -1,0 +1,18 @@
+package com.vsoftcorp.usermgmt.req;
+
+import java.util.List;
+
+
+public class InstParamsReqs {
+
+	private List<InstParamsReq> params;
+
+	public List<InstParamsReq> getParams() {
+		return params;
+	}
+
+	public void setParams(List<InstParamsReq> params) {
+		this.params = params;
+	} 
+	
+}

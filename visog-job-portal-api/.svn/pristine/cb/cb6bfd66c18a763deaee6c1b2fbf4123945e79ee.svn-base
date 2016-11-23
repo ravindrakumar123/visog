@@ -1,0 +1,18 @@
+package com.vsoftcorp.usermgmt.req;
+
+import java.util.List;
+
+public class RolesPrevilegesReqs {
+
+	private List<RolesPrevilegesReq> previleges;
+
+	public List<RolesPrevilegesReq> getPrevileges() {
+		return previleges;
+	}
+
+	public void setPrevileges(List<RolesPrevilegesReq> previleges) {
+		this.previleges = previleges;
+	}
+
+	
+}

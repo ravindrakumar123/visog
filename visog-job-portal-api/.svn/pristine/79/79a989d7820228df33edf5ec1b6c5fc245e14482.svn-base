@@ -1,0 +1,7 @@
+USER_ONBOARDING_MSG = <p>Dear {0} </p><p>Thank you for enrolling in CACU &#39;s SSO Portal!</p><br/> <p>Enclosed is your temporary password. Please use this to sign into your account at sso.corpam.org . You will then be asked to change your password. </p><br/><p>Once again, thank you for allowing CACU the opportunity to serve you!</p><br/><p style="text-align: center;">P/W: <b>{1}</b></p>
+
+OTP_MSG = <p>One time password (OTP) for your activity is {0}</p><p>Bank never calls to verify your OTP. Do not disclose OTP to anyone.</p>
+
+FORGOT_PWD_MSG = <p>Dear {0},</p><p>As per your request we have reset your password. Your new password is <b>{1}</b></p><br/><p>For security reasons we recommend you not to share your password with anyone including CACU staff. You are requested to change this password on login.</p>
+
+RESET_PWD_MSG = <p>Dear {0},</p><p>Admin have reset your password. Your new password is <b>{1}</b></p><br/><p>For security reasons we recommend you not to share your password with anyone including CACU staff. You are requested to change this password on login.</p>

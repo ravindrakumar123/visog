@@ -1,0 +1,67 @@
+package com.vsoftcorp.usermgmt.model;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+
+@Entity
+@Table(name = "USER_XFACTORS")
+public class UserXfactors {
+
+	@Id
+	@Column(name = "XFACTOR_ID")
+	@SequenceGenerator(name = "USER_XFACTORS_SEQ", sequenceName = "USER_XFACTORS_SEQ", allocationSize = 1)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "USER_XFACTORS_SEQ")
+	private long xfactorId;
+	
+	@ManyToOne
+	@JoinColumn(name = "INST_ID")
+	private InstitutionMaster instId;
+
+	@ManyToOne
+	@JoinColumn(name = "USER_ID")
+	private User userId;
+	
+	@Column(name = "XFACTOR_VALUE")
+	private String xfactorValue;
+
+	public InstitutionMaster getInstId() {
+		return instId;
+	}
+
+	public void setInstId(InstitutionMaster instId) {
+		this.instId = instId;
+	}
+
+	public User getUserId() {
+		return userId;
+	}
+
+	public void setUserId(User userId) {
+		this.userId = userId;
+	}
+
+	public String getXfactorValue() {
+		return xfactorValue;
+	}
+
+	public void setXfactorValue(String xfactorValue) {
+		this.xfactorValue = xfactorValue;
+	}
+
+	public long getXfactorId() {
+		return xfactorId;
+	}
+
+	public void setXfactorId(long xfactorId) {
+		this.xfactorId = xfactorId;
+	}
+
+	
+}

@@ -1,0 +1,53 @@
+package com.vsoftcorp.usermgmt.servlet;
+
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
+
+import org.apache.log4j.Logger;
+
+import com.vsoftcorp.usermgmt.utils.PropertyUtil;
+
+public class ContextListener implements ServletContextListener {
+
+	private static final Logger logger = Logger.getLogger(ContextListener.class);
+	
+	/**
+	 * This method will be executed at the time of this Alert web application
+	 * deployment
+	 */
+	public void contextInitialized(ServletContextEvent sce) {
+
+		logger.info(" Start: Calling User Management ContextListener.contextInitialized() method");
+		
+		logger.error("LOG TEST User Management ===========================START");
+		
+		logger.trace("TEST TRACE");
+		logger.debug("TEST DEBUG");
+		logger.info("TEST INFO");
+		logger.warn("TEST WARN");
+		logger.error("TEST ERROR");
+		logger.fatal("TEST FATAL");
+	
+		logger.error("LOG TEST User Management ===========================END");
+		
+		PropertyUtil.setProperties();
+
+		logger.info("usermgmt.properties was loaded successfully");
+
+
+		logger.info(" End: Calling User Management ContextListener.contextInitialized() method");
+	}
+
+	/**
+	 * This method will be executed at the time of un-deployment of the server
+	 * 
+	 * @param sce
+	 */
+	public void contextDestroyed(ServletContextEvent sce) {
+
+		logger.info(" Start: Calling User Management ContextListener.contextDestroyed() method");
+		
+		logger.info(" End: Calling User Management ContextListener.contextDestroyed() method");
+	}
+
+}

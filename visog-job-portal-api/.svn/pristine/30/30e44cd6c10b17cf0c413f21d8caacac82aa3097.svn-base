@@ -1,0 +1,21 @@
+package com.vsoftcorp.usermgmt.dao;
+
+import java.util.List;
+
+import com.vsoftcorp.usermgmt.model.InstitutionMaster;
+
+
+public interface SuperAdminDao {
+	
+	public Long saveInstitute(InstitutionMaster institutionMaster);
+
+	public void updateInstitute(InstitutionMaster institutionMaster);
+	
+	public Boolean deleteInstitute(Long instId);
+
+	public InstitutionMaster getInstitute(Long instId);
+	
+	public List<InstitutionMaster> getInstitutes();
+	
+	
+}

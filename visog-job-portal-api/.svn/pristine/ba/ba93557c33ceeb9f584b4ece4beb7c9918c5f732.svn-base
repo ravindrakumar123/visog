@@ -1,0 +1,313 @@
+package com.vsoftcorp.usermgmt.rest.controller;
+
+import javax.inject.Inject;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+
+import org.apache.log4j.Logger;
+
+import com.vsoftcorp.usermgmt.constants.Status;
+import com.vsoftcorp.usermgmt.req.AccessLinksReq;
+import com.vsoftcorp.usermgmt.req.RolesReq;
+import com.vsoftcorp.usermgmt.res.DataIdResponse;
+import com.vsoftcorp.usermgmt.res.VsoftResponse;
+import com.vsoftcorp.usermgmt.service.RoleService;
+
+@Path("/v1/fi")
+public class RoleController {
+
+	private static final Logger logger = Logger.getLogger(RoleController.class);
+
+	@Inject
+	private RoleService service;
+
+	/**
+	 * This method creates the role for the given institution
+	 * 
+	 * @param institutionId
+	 * @param rolesReq
+	 * @return
+	 */
+	@POST
+	@Consumes("application/json")
+	@Produces("application/json")
+	@Path("/{id}/roles")
+	public VsoftResponse createRole(@PathParam("id") Long institutionId,
+			RolesReq rolesReq) {
+
+		VsoftResponse response = new VsoftResponse();
+		Long rolesId = service.saveRoles(institutionId, rolesReq);
+		logger.info("role id is  : " + rolesId);
+
+		DataIdResponse data = new DataIdResponse();
+		data.setId(rolesId);
+		response.setData(data);
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Role Created Successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+
+		logger.info("Role Created Successfully : " + rolesId);
+
+		return response;
+	}
+
+	/**
+	 * This method returns the role data for the given institution
+	 * 
+	 * @param institutionId
+	 * @return
+	 */
+	@GET
+	@Produces("application/json")
+	@Path("/{id}/roles")
+	public VsoftResponse getRoles(@PathParam("id") Long institutionId) {
+
+		VsoftResponse response = new VsoftResponse();
+		response.setData(service.getRoles(institutionId));
+
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Roles fetched Successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+
+		logger.info("Roles fetched Successfully : " + institutionId);
+
+		return response;
+	}
+
+	/**
+	 * This method returns the role data for the given role id
+	 * 
+	 * @param roleId
+	 * @param institutionId
+	 * @return
+	 */
+	@GET
+	@Produces("application/json")
+	@Path("/{id}/roles/{roleId}")
+	public VsoftResponse getRole(@PathParam("roleId") Long roleId,
+			@PathParam("id") Long institutionId) {
+
+		VsoftResponse response = new VsoftResponse();
+		response.setData(service.getRole(roleId));
+
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Role data fetched Successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+
+		logger.info("Role data fetched Successfully : " + roleId);
+
+		return response;
+	}
+
+	/**
+	 * This method edit the role data for the given role id
+	 * 
+	 * @param institutionId
+	 * @param rolesReq
+	 * @param roleId
+	 * @return
+	 */
+	@PUT
+	@Consumes("application/json")
+	@Produces("application/json")
+	@Path("/{id}/roles/{roleId}")
+	public VsoftResponse updateRole(@PathParam("id") Long institutionId,
+			RolesReq rolesReq, @PathParam("roleId") Long roleId) {
+
+		VsoftResponse response = new VsoftResponse();
+		service.updateRole(rolesReq, roleId);
+
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Role Updated Successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+
+		logger.info("Role Updated Successfully : " + roleId);
+
+		return response;
+	}
+
+	/**
+	 * This method deletes the role data for the given role id
+	 * 
+	 * @param institutionId
+	 * @param roleId
+	 * @return
+	 */
+	@DELETE
+	@Produces("application/json")
+	@Path("/{id}/roles/{roleId}")
+	public VsoftResponse deleteRole(@PathParam("id") Long institutionId,
+			@PathParam("roleId") Long roleId) {
+
+		VsoftResponse response = new VsoftResponse();
+		Boolean isDeleted = service.deleteRole(roleId);
+		if (isDeleted) {
+			response.setStatusCode(Status.STATUSCODE_SUCCESS);
+			response.setMessage("Role Deleted Successfully");
+			response.setStatus(Status.STATUS_SUCCESS);
+			logger.info("Role Deleted Successfully : " + roleId);
+
+		} else {
+			response.setStatusCode(Status.STATUSCODE_FAIL);
+			response.setMessage("Role Deletion Failed");
+			response.setStatus(Status.STATUS_FAIL);
+			logger.info("Role Deletion Failed : " + roleId);
+
+		}
+
+		return response;
+	}
+
+	/**
+	 * This method creates the accessLink for the given institution
+	 * 
+	 * @param institutionId
+	 * @param accessLinksReq
+	 * @return
+	 */
+	@POST
+	@Consumes("application/json")
+	@Produces("application/json")
+	@Path("/{id}/accessLinks")
+	public VsoftResponse saveAccessLink(@PathParam("id") Long institutionId,
+			AccessLinksReq accessLinksReq) {
+
+		VsoftResponse response = new VsoftResponse();
+		logger.info("In Access links controller");
+		Long accessLinkId = service.saveAccessLinks(institutionId,
+				accessLinksReq);
+		logger.info("Access Link id is  : " + accessLinkId);
+
+		DataIdResponse data = new DataIdResponse();
+		data.setId(accessLinkId);
+
+		response.setData(data);
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Access Link Created Successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+
+		logger.info("Access Link Created Successfully : " + accessLinkId);
+
+		return response;
+	}
+
+	/**
+	 * This method returns the accessLink data for the given institution id
+	 * 
+	 * @param institutionId
+	 * @return
+	 */
+	@GET
+	@Produces("application/json")
+	@Path("/{id}/accessLinks")
+	public VsoftResponse getAccessLinks(@PathParam("id") Long institutionId) {
+		
+		VsoftResponse response = new VsoftResponse();
+		response.setData(service.getAccessLinks(institutionId));
+
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Access Links fetched Successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+
+		logger.info("Access Links fetched Successfully : " + institutionId);
+
+		return response;
+	}
+
+	/**
+	 * This method returns the accessLink data for the given accessLink id
+	 * 
+	 * @param accessLinkId
+	 * @param institutionId
+	 * @return
+	 */
+	@GET
+	@Produces("application/json")
+	@Path("/{id}/accessLinks/{accessLinkId}")
+	public VsoftResponse getAccessLink(
+			@PathParam("accessLinkId") Long accessLinkId,
+			@PathParam("id") Long institutionId) {
+
+		VsoftResponse response = new VsoftResponse();
+		response.setData(service.getAccessLink(accessLinkId));
+
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Access Link data fetched Successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+
+		logger.info("Access Link data fetched Successfully : "
+				+ accessLinkId);
+
+		return response;
+	}
+
+	/**
+	 * This method updates the accessLink data for the given accessLink id
+	 * 
+	 * @param institutionId
+	 * @param accessLinksReq
+	 * @param accessLinkId
+	 * @return
+	 */
+	@PUT
+	@Consumes("application/json")
+	@Produces("application/json")
+	@Path("/{id}/accessLinks/{accessLinkId}")
+	public VsoftResponse updateAccessLink(@PathParam("id") Long institutionId,
+			AccessLinksReq accessLinksReq,
+			@PathParam("accessLinkId") Long accessLinkId) {
+
+		VsoftResponse response = new VsoftResponse();
+		service.updateAccessLink(accessLinksReq, accessLinkId);
+
+		response.setStatusCode(Status.STATUSCODE_SUCCESS);
+		response.setMessage("Access Link Updated Successfully");
+		response.setStatus(Status.STATUS_SUCCESS);
+
+		logger.info("Access Link Updated Successfully : " + accessLinkId);
+
+		return response;
+	}
+
+	/**
+	 * This method deletes the accessLink data for the given accessLink id
+	 * 
+	 * @param institutionId
+	 * @param accessLinkId
+	 * @return
+	 */
+	@DELETE
+	@Produces("application/json")
+	@Path("/{id}/accessLinks/{accessLinkId}")
+	public VsoftResponse deleteAccessLink(@PathParam("id") Long institutionId,
+			@PathParam("accessLinkId") Long accessLinkId) {
+
+		VsoftResponse response = new VsoftResponse();
+		Boolean isDeleted = service.deleteAccessLink(accessLinkId);
+		if (isDeleted) {
+			response.setStatusCode(Status.STATUSCODE_SUCCESS);
+			response.setMessage("Access Link Deleted Successfully");
+			response.setStatus(Status.STATUS_SUCCESS);
+
+			logger.info("Access Link Deleted Successfully : "
+					+ accessLinkId);
+
+		} else {
+			response.setStatusCode(Status.STATUSCODE_FAIL);
+			response.setMessage("Access Link Deletion Failed");
+			response.setStatus(Status.STATUS_FAIL);
+
+			logger.info("Access Link Deletion Failed : " + accessLinkId);
+
+		}
+
+		return response;
+	}
+
+}

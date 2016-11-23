@@ -1,0 +1,76 @@
+package com.vsoftcorp.usermgmt.daoimpl;
+
+import java.util.List;
+
+import javax.inject.Singleton;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
+import javax.transaction.Transactional;
+
+import org.apache.log4j.Logger;
+
+import com.vsoftcorp.usermgmt.dao.SuperAdminDao;
+import com.vsoftcorp.usermgmt.model.InstitutionMaster;
+
+@Singleton
+@Transactional
+public class SuperAdminDaoImpl implements SuperAdminDao {
+
+	@PersistenceContext(unitName = "VsoftUserManagement")
+	private EntityManager em;
+
+	private static final Logger logger = Logger.getLogger(SuperAdminDaoImpl.class);
+
+	/**
+	 * This method save the institution and returns institution Id
+	 */
+	public Long saveInstitute(InstitutionMaster institutionMaster) {
+		em.persist(institutionMaster);
+		return institutionMaster.getInstId();
+	}
+	
+	/**
+	 *This method updates the institution  
+	 */
+	public void updateInstitute(InstitutionMaster institutionMaster) {
+		em.merge(institutionMaster);
+	}
+
+	/**
+	 * This method deletes the institution for the given institution id
+	 */
+	public Boolean deleteInstitute(Long instId) {
+		Query query = em
+				.createQuery("DELETE FROM InstitutionMaster WHERE instId = :instId");
+
+		query.setParameter("instId", instId);
+
+		int deletionCount = query.executeUpdate();
+		return (deletionCount != 0);
+	}
+
+	/**
+	 * This method returns the institution and returns institution id
+	 */
+	public InstitutionMaster getInstitute(Long instId) {
+		return em.find(InstitutionMaster.class, instId);
+	}
+
+	/**
+	 * This method returns all the institutions
+	 */
+	public List<InstitutionMaster> getInstitutes() {
+		CriteriaBuilder cb = em.getCriteriaBuilder();
+		CriteriaQuery<InstitutionMaster> e = cb
+				.createQuery(InstitutionMaster.class);
+		Root<InstitutionMaster> ee = (Root<InstitutionMaster>) e
+				.from(InstitutionMaster.class);
+		e.select(ee);
+
+		return em.createQuery(e).getResultList();
+	}
+}

@@ -1,0 +1,139 @@
+package com.vsoftcorp.usermgmt.daoimpl;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import javax.inject.Singleton;
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.PersistenceContext;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+import javax.transaction.Transactional;
+
+import org.apache.log4j.Logger;
+
+import com.vsoftcorp.usermgmt.constants.AppConstants;
+import com.vsoftcorp.usermgmt.dao.ReportDao;
+import com.vsoftcorp.usermgmt.model.LoginMaster;
+import com.vsoftcorp.usermgmt.model.User;
+
+@Singleton
+@Transactional
+public class ReportDaoImpl implements ReportDao{
+	
+	@PersistenceContext(unitName = "VsoftUserManagement")
+	private EntityManager em;
+
+	private static final Logger logger = Logger.getLogger(ReportDaoImpl.class);
+	
+	/**
+	 * This method returns all the Login user details according to the latest to the old login  
+	 */
+	public List<LoginMaster> getAuditLoginReport() {
+		
+		CriteriaBuilder qb = em.getCriteriaBuilder();
+		CriteriaQuery<LoginMaster> cq = qb.createQuery(LoginMaster.class);
+		Root<LoginMaster> loginMaster = cq.from(LoginMaster.class);
+		
+		cq.select(loginMaster);
+
+		cq.orderBy(qb.desc(loginMaster.get("createdOn")));
+		  
+		return em.createQuery(cq).getResultList();
+	}
+
+	/**
+	 * This method returns all the user success login attempts for the specified user
+	 */
+	public List<LoginMaster> getSuccessLoginAttemptsReport(Date startDate, Date endDate) {
+		
+		CriteriaBuilder qb = em.getCriteriaBuilder();
+		CriteriaQuery<LoginMaster> cq = qb.createQuery(LoginMaster.class);
+		cq.distinct(true);
+		Root<LoginMaster> loginMaster = cq.from(LoginMaster.class);
+		List<Predicate> predicates = new ArrayList<Predicate>();
+		
+		predicates.add(qb.between(loginMaster.get("createdOn"), startDate, endDate));
+		predicates.add(qb.equal(loginMaster.get("successInd"), AppConstants.TRUE_CHAR));
+		predicates.add(qb.isNotNull(loginMaster.get("inOutInd")));
+		cq.select(loginMaster);
+		cq.orderBy(qb.desc(loginMaster.get("createdOn")));
+		cq.where(qb.and(predicates.toArray(new Predicate[] {})));
+
+		return em.createQuery(cq).getResultList();
+	}
+	
+	/**
+	 * Get User Latest Login 
+	 */
+	public LoginMaster lastSuccessLogin(User user) {
+		
+		try{
+			CriteriaBuilder qb = em.getCriteriaBuilder();
+			CriteriaQuery<LoginMaster> cq = qb.createQuery(LoginMaster.class);
+		    Root<LoginMaster> root  = cq.from(LoginMaster.class);	
+		    
+		    List<Predicate> predicates = new ArrayList<Predicate>();
+		    //predicates.add(qb.equal(qb.isNotNull(root.get("userId").get("userId")), user));
+	        predicates.add(qb.equal(root.get("userId"), user));
+	        predicates.add(qb.equal(root.get("successInd"), AppConstants.TRUE_CHAR));
+	        predicates.add(qb.isNotNull(root.get("inOutDate")));
+	      
+	        
+	        cq.where(qb.and(predicates.toArray(new Predicate[]{})));
+	        
+	        return em.createQuery(cq.orderBy(qb.desc(root.<Integer>get("createdOn")))).setMaxResults(1).getSingleResult();
+		
+			} catch (NoResultException nre) {
+				return null;
+			} catch (Exception e) {
+				throw e;
+			}
+	
+	}
+	
+	
+	/**
+	 * Get User Login Failure Attempts
+	 */
+	public List<LoginMaster> getFailureLoginAttemptsReport(User user,Date convertedStartDate, Date convertedEndDate) 
+	{
+		
+		CriteriaBuilder qb = em.getCriteriaBuilder();
+		CriteriaQuery<LoginMaster> cq = qb.createQuery(LoginMaster.class);
+	    Root<LoginMaster> root  = cq.from(LoginMaster.class);			
+	    List<Predicate> predicates = new ArrayList<Predicate>();
+	    predicates.add(qb.equal(root.get("userId"), user));
+	    predicates.add(qb.equal(root.get("successInd"), AppConstants.FALSE_CHAR));
+	    predicates.add(qb.between(root.get("createdOn"),convertedStartDate, convertedEndDate));
+        cq.select(root);
+	    cq.where(qb.and(predicates.toArray(new Predicate[]{})));
+		cq.orderBy(qb.desc(root.get("createdOn")));
+	       
+		return em.createQuery(cq).getResultList();
+		
+		
+	}
+	
+	/**
+	 * Get All Users Login Failure Attempts
+	 */
+	public List<LoginMaster> getFailureLoginAttemptsReportForAll(Date convertedStartDate, Date convertedEndDate) {
+		CriteriaBuilder qb = em.getCriteriaBuilder();
+		CriteriaQuery<LoginMaster> cq = qb.createQuery(LoginMaster.class);
+	    Root<LoginMaster> root  = cq.from(LoginMaster.class);			
+	    List<Predicate> predicates = new ArrayList<Predicate>();
+	    predicates.add(qb.equal(root.get("successInd"), AppConstants.FALSE_CHAR));
+	    predicates.add(qb.between(root.get("createdOn"),convertedStartDate, convertedEndDate));
+        cq.select(root);
+	    cq.where(qb.and(predicates.toArray(new Predicate[]{})));
+		cq.orderBy(qb.desc(root.get("createdOn")));
+	       
+		return em.createQuery(cq).getResultList();
+	}
+
+}
