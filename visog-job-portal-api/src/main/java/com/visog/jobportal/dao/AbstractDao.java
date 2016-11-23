@@ -6,7 +6,7 @@ import javax.persistence.Query;
 
 public abstract class AbstractDao implements AbstractDaoI {
 	
-	@PersistenceContext(unitName = "VisogJobPortal")
+	@PersistenceContext(unitName = "VisogJobPortal")//
 	protected EntityManager em;
 	
 	public Object getByKey(Class persistentClass, String key) {
