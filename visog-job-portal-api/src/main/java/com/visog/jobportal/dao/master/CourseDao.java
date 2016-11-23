@@ -8,5 +8,5 @@ import com.visog.jobportal.model.master.Courses;
 public interface CourseDao extends AbstractDaoI{
 	
 	public List<Courses> getCourses();
-
+//
 }
