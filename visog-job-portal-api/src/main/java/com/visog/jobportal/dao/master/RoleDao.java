@@ -9,4 +9,10 @@ public interface RoleDao extends AbstractDaoI {
 	
 	public List<Roles> getRoles();
 	
+	//public Boolean isRoleExists(String name);
+	
+	/*
+	 * 
+	 * ravi
+	 */
 }
